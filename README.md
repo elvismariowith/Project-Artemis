@@ -15,3 +15,7 @@ Compile the controller input program using SDL2 flags to link the appropriate li
 # Compiles using g++ and links SDL2 libraries
 g++ ./Controller\ Input/controller.cpp -lSDL2main -lSDL2
 ```
+PS4 controller program requires higher privileges
+```bash
+# Run the command with sudo
+sudo ./controller
