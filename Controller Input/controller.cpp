@@ -1,62 +1,98 @@
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_gamecontroller.h>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <unistd.h>
+
+#define SERIAL_PORT "/dev/ttyACM0"
+
+SDL_GameController* controller = NULL;
+
+void arduinoCommunication(int angle){
+    std::ofstream serial(SERIAL_PORT);
+    if (serial.is_open()){
+        serial << angle << std::endl;
+        serial.close();
+        std::cout << "Sent to Arduino successfully" << angle << std::endl;
+    } else{
+        std::cerr << "Failed to open serial port" << std::endl;
+    }
+}
+
+SDL_GameController* detectController(){
+
+    int numJoysticks = SDL_NumJoysticks();
+    std::cout << "Number of connected controllers: " << numJoysticks << std::endl;
+
+    if (numJoysticks > 0) {
+            if (SDL_IsGameController(0)) {
+                controller = SDL_GameControllerOpen(0);
+            }
+            else {
+                std::cout << "No controllers detected." << std::endl;
+            }
+    }
+    return controller;
+}
+
+void readControllerInput(){
+
+    bool running = true;
+    SDL_Event event;
+    while(running) {
+        while (SDL_PollEvent(&event)){
+            if (event.type == SDL_QUIT){
+                running = false;
+            }
+            if (event.type == SDL_CONTROLLERBUTTONDOWN){
+                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_A){
+                    std::cout << "X was pressed!" << std::endl;
+                }
+            }
+
+            if (event.type == SDL_CONTROLLERAXISMOTION) {
+                if (event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
+                    int value = event.caxis.value;
+
+                    if (value < -8000){
+                        std::cout << "Moving Left! Value: " << value << std::endl;
+                        int angle = (value + 32768) * 180 / 65535;
+                        arduinoCommunication(angle);
+                        usleep(50000);
+
+                    } else if (value > 8000){
+                        std::cout << "Moving Right! Value: " << value << std::endl;
+                        int angle = (value + 32768) * 180 / 65535;
+                        arduinoCommunication(angle);
+                        usleep(50000);
+                    }
+                }
+            }
+        }
+    }
+
+}
+
 
 int main() {
-    if ((SDL_Init(SDL_INIT_GAMECONTROLLER) == -1)) { 
-        std::cout<<"Could not initialize SDL: "<<SDL_GetError()<<std::endl;
-        return -1;
+    // Initialize SDL
+    if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK) < 0) {
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        return 1;
+    } else{
+        std::cout << "SDL initialized!" <<std::endl;
     }
 
-    std::cout<<"SDL initialized"<<std::endl;
+    // Controller setup here
 
-    if (SDL_NumJoysticks() < 1) {
-        std::cout<<"No joysticks available"<<std::endl;
-        SDL_Quit();
-        return -1;
-    }
+    controller = detectController();
 
-    std::cout<<"Number of controllers: "<<SDL_NumJoysticks()<<std::endl;
+    // Detecting controller input here...
 
-    if (!SDL_IsGameController(0)) {
-        std::cout<<"Joystick not supported"<<std::endl;
-        return -1;
-    }
-
-    SDL_GameController* controller = SDL_GameControllerOpen(0);
-
-    if (controller == nullptr) {
-        std::cout<<"Error opening controller"<<std::endl;
-        return -1;
-    }
-
-    std::cout<<"Using "<<SDL_GameControllerName(controller)<<std::endl;
-
-    char guid[33];
-    SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(SDL_GameControllerGetJoystick(controller)), guid, sizeof(guid));
-    std::cout << "Controller GUID: " << guid << std::endl;
-
-    while (true) {
-        int right_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTX);
-        int left_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
-
-        int right_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_RIGHTY);
-        int left_y = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY);
-
-        // for debuggin purposes
-        if (!(right_x == 0 && left_x == 0 && right_y == 0 && left_y == 0)) {
-            std::cout<<"x: ("<<right_x<<", "<<left_x<<")"<<std::endl;
-            std::cout<<"y: ("<<right_y<<", "<<left_y<<")"<<std::endl;
-        }
-
-        if (SDL_GetError()) {
-            std::cout<<SDL_GetError()<<std::endl;
-            return -1;
-        }
-    }
-
+    readControllerInput();
+    
+    // Ya gotta clean up after yourself
     SDL_GameControllerClose(controller);
     SDL_Quit();
-
     return 0;
 }
