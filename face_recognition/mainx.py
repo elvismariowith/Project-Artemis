@@ -30,11 +30,11 @@ def compareFaces(face1, face2):
     return result[0]
 
 # Load sample images and get encodings
-steve_face_encoding = load_face_encoding("steve.jpg")
+daniel_face_encoding = load_face_encoding("daniel.jpg")
 elon_face_encoding = load_face_encoding("elon.jpeg")
 
 
-compareFaces(elon_face_encoding, steve_face_encoding)
+compareFaces(elon_face_encoding, daniel_face_encoding)
 
 
 # Create arrays of known face encodings and their names
@@ -42,8 +42,8 @@ known_face_encodings = []
 known_face_names = []
 
 # Add to the arrays
-known_face_encodings.append(steve_face_encoding)
-known_face_names.append("Steve Jobs")
+known_face_encodings.append(daniel_face_encoding)
+known_face_names.append("daniel ocampo")
 
 known_face_encodings.append(elon_face_encoding)
 known_face_names.append("Elon Musk")
