@@ -23,97 +23,67 @@ def load_face_encoding(image_path):
         print(f"No face found in {image_path}")
         return None
 
-
-# Load sample images and get encodings
-steve_face_encoding = load_face_encoding("steve.jpg")
-elon_face_encoding = load_face_encoding("elon.jpeg")
-
-# Compare two faces
+# Function to compare two faces
 def compareFaces(face1, face2):
     result = face_recognition.compare_faces([face1], face2)
     print(result[0])
     return result[0]
 
+# Load sample images and get encodings
+steve_face_encoding = load_face_encoding("steve.jpg")
+elon_face_encoding = load_face_encoding("elon.jpeg")
+
+
 compareFaces(elon_face_encoding, steve_face_encoding)
 
 
+# Create arrays of known face encodings and their names
+known_face_encodings = []
+known_face_names = []
 
-# elon = face_recognition.load_image_file("elon.jpeg")
-# steve = face_recognition.load_image_file("elon2.jpg")  
-# elon_encoding = face_recognition.face_encodings(elon)[0]
-# unknown_encoding = face_recognition.face_encodings(steve)[0]
-# results = face_recognition.compare_faces([elon_encoding], unknown_encoding)
-# print(results)
-# if results[0]:
-#     print("Success")
-# else:
-#     print("Failed")
+# Add to the arrays
+known_face_encodings.append(steve_face_encoding)
+known_face_names.append("Steve Jobs")
 
+known_face_encodings.append(elon_face_encoding)
+known_face_names.append("Elon Musk")
 
-
-
+# Initialize a video capture object
+video_capture = cv2.VideoCapture(0)
 
 
 
+# Current Face Information
+detected_faces = []
+face_encodings = []
+face_names = []
 
+# Process every other frame for performance optimization
+process_this_frame = True
 
-# if elon_face_encoding == elon2_face_encoding:
-#     print("True")
-# else:
-#     print("False")
+while True:
+    # ret is a boolean that returns true if the frame is available and frame is the actual frame
+    ret, frame = video_capture.read()
+    if not ret:
+        print("Error: Failed to capture frame")
+        break
 
+    if process_this_frame:
 
-# # Create arrays of known face encodings and their names (only if encoding exists)
-# known_face_encodings = []
-# known_face_names = []
+        # Resize frame to 1/4 size for faster processing
+        small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
-# if steve_face_encoding is not None:
-#     known_face_encodings.append(steve_face_encoding)
-#     known_face_names.append("Steve Jobs")
+        # Convert BGR to RGB for face_recognition library
+        rgb_small_frame = small_frame[:, :, ::-1]  # Convert BGR to RGB
 
-# if elon_face_encoding is not None:
-#     known_face_encodings.append(elon_face_encoding)
-#     known_face_names.append("Elon Musk")
+        # Detects all the faces in the frame. It returns a list of coordinates of the detected faces
+        detected_faces = face_recognition.face_locations(rgb_small_frame)
 
-# # Ensure there are known faces before running recognition
-# if not known_face_encodings:
-#     print("Error: No known faces loaded. Exiting...")
-#     exit()
-
-# # Get a reference to the webcam
-# video_capture = cv2.VideoCapture(0)
-
-# if not video_capture.isOpened():
-#     print("Error: Could not open webcam")
-#     exit()
-
-# # Initialize some variables
-# face_locations = []
-# face_encodings = []
-# face_names = []
-# process_this_frame = True
-
-# while True:
-#     # Grab a single frame of video
-#     ret, frame = video_capture.read()
-#     if not ret:
-#         print("Error: Failed to capture frame")
-#         break
-
-#     # Process every other frame for performance optimization
-#     if process_this_frame:
-#         # Resize frame to 1/4 size for faster processing
-#         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-#         rgb_small_frame = small_frame[:, :, ::-1]  # Convert BGR to RGB
-
-#         # Find all face locations in the frame
-#         face_locations = face_recognition.face_locations(rgb_small_frame)
-
-#         # Ensure face_locations is not empty before encoding
-#         if face_locations:
-#             face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
-#         else:
-#             face_encodings = []
+        if detected_faces:
+            # TODO: Check arguments for face_encodings
+            face_encodings = face_recognition.face_encodings(rgb_small_frame, detected_faces)
+        else:
+            face_encodings = []
 
 #         face_names = []
 #         for face_encoding in face_encodings:
@@ -129,7 +99,7 @@ compareFaces(elon_face_encoding, steve_face_encoding)
 
 #             face_names.append(name)
 
-#     process_this_frame = not process_this_frame
+    process_this_frame = not process_this_frame
 
 #     # Display results
 #     for (top, right, bottom, left), name in zip(face_locations, face_names):
@@ -146,13 +116,13 @@ compareFaces(elon_face_encoding, steve_face_encoding)
 #         font = cv2.FONT_HERSHEY_DUPLEX
 #         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
-#     # Display the frame
-#     cv2.imshow('Video', frame)
+    # Display the frame
+    cv2.imshow('Video', frame)
 
-#     # Quit with 'q' key
-#     if cv2.waitKey(1) & 0xFF == ord('q'):
-#         break
+    # Quit with 'q' key
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-# # Release resources
-# video_capture.release()
-# cv2.destroyAllWindows()
+# Release resources
+video_capture.release()
+cv2.destroyAllWindows()
