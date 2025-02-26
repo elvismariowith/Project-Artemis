@@ -79,42 +79,34 @@ while True:
         # Detects all the faces in the frame. It returns a list of coordinates of the detected faces
         detected_faces = face_recognition.face_locations(rgb_small_frame)
 
+        # Get the face encodings for all the detected faces
         if detected_faces:
             # TODO: Check arguments for face_encodings
             face_encodings = face_recognition.face_encodings(rgb_small_frame, detected_faces)
         else:
             face_encodings = []
 
-#         face_names = []
-#         for face_encoding in face_encodings:
-#             matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
-#             name = "Unknown"
+        face_names = []
 
-#             # Use the face with the smallest distance to the new face
-#             face_distances = face_recognition.face_distance(known_face_encodings, face_encoding)
-#             if len(face_distances) > 0:
-#                 best_match_index = np.argmin(face_distances)
-#                 if matches[best_match_index]:
-#                     name = known_face_names[best_match_index]
 
-#             face_names.append(name)
+        for i in face_encodings:
+            matches = face_recognition.compare_faces(known_face_encodings, i)
+            name = "Unknown"
+
+            # Use the face with the smallest distance to the new face
+            face_distances = face_recognition.face_distance(known_face_encodings, i)
+            if len(face_distances) > 0:
+                best_match_index = np.argmin(face_distances)
+                if matches[best_match_index]:
+                    name = known_face_names[best_match_index]
+
+            face_names.append(name)
 
     process_this_frame = not process_this_frame
 
-#     # Display results
-#     for (top, right, bottom, left), name in zip(face_locations, face_names):
-#         top *= 4
-#         right *= 4
-#         bottom *= 4
-#         left *= 4
-
-#         # Draw a rectangle around the face
-#         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-#         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-
-#         # Draw label with name
-#         font = cv2.FONT_HERSHEY_DUPLEX
-#         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+    # Display results
+    for name in face_names:
+        print(f"Face found: {name}")
 
     # Display the frame
     cv2.imshow('Video', frame)
