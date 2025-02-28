@@ -7,3 +7,16 @@ set(VCPKG_PLATFORM_TOOLSET v142)
 add_subdirectory(src/client)
 
 add_executable(main src/main.cpp)
+
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
+target_link_libraries(main ${Boost_LIBRARIES})
+
+find_library(client src/client)
+include_directories(src/client)
+link_directories(src/client)
+
+
+target_link_libraries(main client)
+
