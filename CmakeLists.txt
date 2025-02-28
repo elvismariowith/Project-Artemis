@@ -4,12 +4,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(VCPKG_PLATFORM_TOOLSET v142)
-find_package(Boost REQUIRED)
-find_package(OpenCV REQUIRED)
+add_subdirectory(src/client)
 
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-
-add_executable(client src/webserver/client.cpp)
-target_link_libraries(client ${Boost_LIBRARIES})
-target_link_libraries(client ${OpenCV_LIBS})
+add_executable(main src/main.cpp)
