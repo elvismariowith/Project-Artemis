@@ -23,7 +23,7 @@ Uint32 AxisTimerCallback(Uint32 interval, void* param) {
 }
 
 HANDLE openSerialPort() {
-    HANDLE hSerial = CreateFile((LPCWSTR) SERIAL_PORT,
+    HANDLE hSerial = CreateFileA(SERIAL_PORT,
                                 GENERIC_READ | GENERIC_WRITE,
                                 0,
                                 nullptr,
