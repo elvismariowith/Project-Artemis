@@ -4,8 +4,49 @@
 #include <windows.h>
 #include <iostream>
 #include <string>
+#include <fstream>
+#include <filesystem>
+#include <cstdlib>
 
-#define SERIAL_PORT "\\\\.\\COM7"
+bool is_valid_filepath(const std::string& filePath) {
+    std::filesystem::path path(filePath);
+    return std::filesystem::exists(path);
+}
+
+void loadEnv(const std::string& filePath) {
+    if (!is_valid_filepath(filePath)) {
+        std::cerr << "File path is invalid." << std::endl;
+        return;
+    }
+
+    std::ifstream file(filePath);
+
+    if (file.is_open()) {
+        std::string line;
+
+        while (std::getline(file, line)) {
+            size_t delimiterPos = line.find("=");
+
+            if (delimiterPos != std::string::npos) {
+                std::string var = line.substr(0, delimiterPos);
+                std::string value = line.substr(delimiterPos + 1, delimiterPos);
+
+                std::cout << "var: " << var << " val: " << value << std::endl;
+
+                if (value[0] == '"' && value[value.length() - 1] == '"') {
+                    value = value.substr(1, value.length() - 2);
+                }
+
+                putenv((var + "=" + value).c_str()); // Overwrite if exists
+            }
+        }
+
+        file.close();
+    } else {
+        std::cerr << "Error opening .env file: " << filePath << std::endl;
+        return;
+    }
+}
 
 // Global variables for managing repeated commands.
 SDL_TimerID axisTimerID = 0;
@@ -22,8 +63,8 @@ Uint32 AxisTimerCallback(Uint32 interval, void* param) {
     return interval; // Reschedule the timer to run repeatedly.
 }
 
-HANDLE openSerialPort() {
-    HANDLE hSerial = CreateFileA(SERIAL_PORT,
+HANDLE openSerialPort(std::string &serialPort) {
+    HANDLE hSerial = CreateFileA(serialPort.c_str(),
                                 GENERIC_READ | GENERIC_WRITE,
                                 0,
                                 nullptr,
@@ -31,7 +72,7 @@ HANDLE openSerialPort() {
                                 0,
                                 nullptr);
     if (hSerial == INVALID_HANDLE_VALUE) {
-        std::cerr << "Error opening " << SERIAL_PORT << std::endl;
+        std::cerr << "Error opening " << serialPort << ". Error code: " << GetLastError() << std::endl;
         return INVALID_HANDLE_VALUE;
     }
     
@@ -107,6 +148,23 @@ SDL_GameController* detectController(){
 }
 
 int main() {
+    loadEnv("./.env");
+
+    std::string serialPortName;
+
+    if (std::getenv("ARDUINO_SERIAL_PORT") == nullptr) {
+        std::cout << "No ARDUINO_SERIAL_PORT set." << std::endl;
+        return -1;
+    } else {
+        serialPortName = std::string(std::getenv("ARDUINO_SERIAL_PORT"));
+
+        if (serialPortName.substr(0, 5) != "\\\\.\\") {
+            serialPortName = "\\\\.\\" + serialPortName;
+        }
+    
+        std::cout << "Arduino's serial port set to " << serialPortName << std::endl;
+    }
+
     // Initialize SDL subsystems.
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -119,7 +177,7 @@ int main() {
         return -1;
     }
     
-    HANDLE serialPort = openSerialPort();
+    HANDLE serialPort = openSerialPort(serialPortName);
     if (serialPort == INVALID_HANDLE_VALUE) {
         SDL_GameControllerClose(controller);
         SDL_Quit();
