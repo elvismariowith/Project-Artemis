@@ -1,4 +1,4 @@
-#include <Servo.h>
+  #include <Servo.h>
 
 Servo myservo;
 int default_position = 90;
@@ -19,14 +19,28 @@ void loop() {
   // put your main code here, to run repeatedly:  
 
   //read joystick
-  if (Serial.available() > 0){
+  while (Serial.available()){
     int angle = Serial.parseInt();
 
-    if (angle >= 0 && angle <= 180) {
-      myservo.write(angle);
-      Serial.print("Moving servo to: ");
-      Serial.println(angle);
+    Serial.println(angle);
+
+    if (angle == -1){
+      if (currentposition != 0){
+        currentposition = currentposition - 5;
+        myservo.write(currentposition);
+      }
     }
+
+    if (angle == 1){
+      if (currentposition != 180){
+        currentposition = currentposition + 5;
+        myservo.write(currentposition);
+      }
+      
+    }
+
+    //Serial.print("Current position: ");
+    Serial.println(angle);
   } 
   
 }

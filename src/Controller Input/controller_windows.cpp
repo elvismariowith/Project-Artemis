@@ -23,7 +23,7 @@ Uint32 AxisTimerCallback(Uint32 interval, void* param) {
 }
 
 HANDLE openSerialPort() {
-    HANDLE hSerial = CreateFile(SERIAL_PORT,
+    HANDLE hSerial = CreateFile((LPCWSTR) SERIAL_PORT,
                                 GENERIC_READ | GENERIC_WRITE,
                                 0,
                                 nullptr,
@@ -76,8 +76,11 @@ void arduinoCommunication(HANDLE serialPort, int command) {
     std::string msg = std::to_string(command) + "\n";
     DWORD bytesWritten;
     if (!WriteFile(serialPort, msg.c_str(), (DWORD)msg.size(), &bytesWritten, nullptr)) {
-        std::cerr << "Failed to write to serial port." << std::endl;
-    }
+        std::cerr << "Failed to write to serial port. Error code: " << GetLastError() << std::endl;
+    }  
+
+    // clear input and output buffer
+    PurgeComm(serialPort, 0b1100);
 }
 
 SDL_GameController* detectController(){
