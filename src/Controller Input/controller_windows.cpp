@@ -2,6 +2,9 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_gamecontroller.h>
 #include <windows.h>
+#include <SetupAPI.h>
+#include <initguid.h>
+#include <devguid.h>
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -150,21 +153,22 @@ SDL_GameController* detectController(){
 int main() {
     loadEnv("./.env");
 
+    bool serialPortSet = false;
     std::string serialPortName;
 
     if (std::getenv("ARDUINO_SERIAL_PORT") == nullptr) {
-        std::cout << "No ARDUINO_SERIAL_PORT set." << std::endl;
-        return -1;
+        std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
     } else {
         serialPortName = std::string(std::getenv("ARDUINO_SERIAL_PORT"));
 
-        if (serialPortName.substr(0, 5) != "\\\\.\\") {
+        if (serialPortName.substr(0, 4) != "\\\\.\\") {
             serialPortName = "\\\\.\\" + serialPortName;
         }
     
         std::cout << "Arduino's serial port set to " << serialPortName << std::endl;
+        serialPortSet = true;
     }
-
+    
     // Initialize SDL subsystems.
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -176,6 +180,41 @@ int main() {
         SDL_Quit();
         return -1;
     }
+
+    if (!serialPortSet) {
+        HDEVINFO ports = SetupDiGetClassDevsW(&GUID_DEVCLASS_PORTS, L"USB", nullptr, DIGCF_PRESENT);
+    
+        SP_DEVINFO_DATA info;
+        info.cbSize = sizeof(SP_DEVINFO_DATA);
+    
+        for (int i = 0; SetupDiEnumDeviceInfo(ports, i, &info); ++i) {
+            unsigned char deviceName[256];
+            SetupDiGetDeviceRegistryPropertyA(ports, &info, SPDRP_FRIENDLYNAME, nullptr, deviceName, sizeof(deviceName), nullptr);
+    
+            HKEY hKey = SetupDiOpenDevRegKey(ports, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+            TCHAR portName[256];
+            DWORD portNameSize = sizeof(portName);
+            RegQueryValueExA(hKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize);
+            RegCloseKey(hKey);
+    
+            if (deviceName != nullptr) {
+                if (std::string((char *)deviceName).substr(0, 7) == "Arduino") {
+                    serialPortName = std::string((char *)portName);
+
+                    if (serialPortName.substr(0, 5) != "\\\\.\\") {
+                        serialPortName = "\\\\.\\" + serialPortName;
+                    }
+    
+                    std::cout << "Found " << deviceName << ". Defaulting to serial port " << serialPortName << std::endl;
+                    serialPortSet = true;
+                    break;
+                }
+            }
+        }
+    
+        SetupDiDestroyDeviceInfoList(&info);
+    }
+
     
     HANDLE serialPort = openSerialPort(serialPortName);
     if (serialPort == INVALID_HANDLE_VALUE) {
