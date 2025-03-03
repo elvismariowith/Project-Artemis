@@ -6,6 +6,7 @@
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
+#include <optional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -36,8 +37,6 @@ void loadEnv(const std::string& filePath) {
             if (delimiterPos != std::string::npos) {
                 std::string var = line.substr(0, delimiterPos);
                 std::string value = line.substr(delimiterPos + 1, delimiterPos);
-
-                std::cout << "var: " << var << " val: " << value << std::endl;
 
                 if (value[0] == '"' && value[value.length() - 1] == '"') {
                     value = value.substr(1, value.length() - 2);
@@ -159,25 +158,65 @@ SDL_GameController* detectController(){
     return controller;
 }
 
+/// Manager to work with and load variables from the environment and load `.env` files.
+class EnvironmentManager {
+    public:
+    /// Creates an empty `EnvironmentManager` to manage environment variables.
+    EnvironmentManager() noexcept { }
+
+    /// Loads a `.env` file from the given `path`.
+    /// If no path is given it defaults to searching for a `.env` file in the current directory.
+    /// Returns `false` if it could not load the requested `.env` file.
+    /// Returns `true` otherwise.
+    bool loadEnvironment(const std::string &path = "./.env") {
+        if (!is_valid_filepath(path)) {
+            return false;
+        }
+
+        loadEnv(path);
+        return true;
+    }
+
+    /// Checks if the given variable exists in the environment.
+    /// Return `true` if the variable exists, `false` otherwise.
+    bool exists(const std::string &variable) {
+        return std::getenv(variable.c_str()) != nullptr;
+    }
+
+    /// Gets the value of the given `variable` from the environment.
+    /// Returns `std::nullopt` if the variable doesn't exist. Returns `std::string` otherwise.
+    std::optional<std::string> get(const std::string &variable) {
+        const char *value = std::getenv(variable.c_str());
+
+        if (value == nullptr) {
+            return std::nullopt;
+        }
+
+        return std::string(value);
+    }
+};
+
 int main() {
-    loadEnv("./.env");
+    EnvironmentManager envManager;
+    envManager.loadEnvironment("./.env");
 
     bool serialPortSet = false;
     std::string serialPortName;
 
-    if (std::getenv("ARDUINO_SERIAL_PORT") == nullptr) {
-        std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
-    } else {
-        serialPortName = std::string(std::getenv("ARDUINO_SERIAL_PORT"));
-
+    if (envManager.exists("ARDUINO_SERIAL_PORT")) {
+        // Doesn't check for std::nullopt due to previous .exists() call which prevents UB
+        serialPortName = envManager.get("ARDUINO_SERIAL_PORT").value();
+        
         #ifdef _WIN32
         if (serialPortName.substr(0, 4) != "\\\\.\\") {
             serialPortName = "\\\\.\\" + serialPortName;
         }
         #endif
-    
+        
         std::cout << "Arduino's serial port set to " << serialPortName << std::endl;
         serialPortSet = true;
+    } else {
+        std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
     }
     
     // Initialize SDL subsystems.
