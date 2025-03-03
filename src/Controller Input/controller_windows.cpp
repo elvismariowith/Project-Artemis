@@ -1,15 +1,18 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_gamecontroller.h>
-#include <windows.h>
-#include <SetupAPI.h>
-#include <initguid.h>
-#include <devguid.h>
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <filesystem>
 #include <cstdlib>
+
+#ifdef _WIN32
+#include <windows.h>
+#include <SetupAPI.h>
+#include <initguid.h>
+#include <devguid.h>
+#endif
 
 bool is_valid_filepath(const std::string& filePath) {
     std::filesystem::path path(filePath);
@@ -40,7 +43,9 @@ void loadEnv(const std::string& filePath) {
                     value = value.substr(1, value.length() - 2);
                 }
 
+                #ifdef _WIN32
                 putenv((var + "=" + value).c_str()); // Overwrite if exists
+                #endif
             }
         }
 
@@ -66,6 +71,7 @@ Uint32 AxisTimerCallback(Uint32 interval, void* param) {
     return interval; // Reschedule the timer to run repeatedly.
 }
 
+#ifdef _WIN32
 HANDLE openSerialPort(std::string &serialPort) {
     HANDLE hSerial = CreateFileA(serialPort.c_str(),
                                 GENERIC_READ | GENERIC_WRITE,
@@ -115,7 +121,9 @@ HANDLE openSerialPort(std::string &serialPort) {
     
     return hSerial;
 }
+#endif
 
+#ifdef _WIN32
 void arduinoCommunication(HANDLE serialPort, int command) {
     std::string msg = std::to_string(command) + "\n";
     DWORD bytesWritten;
@@ -126,6 +134,7 @@ void arduinoCommunication(HANDLE serialPort, int command) {
     // clear input and output buffer
     PurgeComm(serialPort, 0b1100);
 }
+#endif
 
 SDL_GameController* detectController(){
     int numJoysticks = SDL_NumJoysticks();
@@ -161,9 +170,11 @@ int main() {
     } else {
         serialPortName = std::string(std::getenv("ARDUINO_SERIAL_PORT"));
 
+        #ifdef _WIN32
         if (serialPortName.substr(0, 4) != "\\\\.\\") {
             serialPortName = "\\\\.\\" + serialPortName;
         }
+        #endif
     
         std::cout << "Arduino's serial port set to " << serialPortName << std::endl;
         serialPortSet = true;
@@ -182,6 +193,7 @@ int main() {
     }
 
     if (!serialPortSet) {
+        #ifdef _WIN32
         HDEVINFO ports = SetupDiGetClassDevsW(&GUID_DEVCLASS_PORTS, L"USB", nullptr, DIGCF_PRESENT);
     
         SP_DEVINFO_DATA info;
@@ -213,15 +225,17 @@ int main() {
         }
     
         SetupDiDestroyDeviceInfoList(&info);
+        #endif
     }
 
-    
+    #ifdef _WIN32
     HANDLE serialPort = openSerialPort(serialPortName);
     if (serialPort == INVALID_HANDLE_VALUE) {
         SDL_GameControllerClose(controller);
         SDL_Quit();
         return -1;
     }
+    #endif
     
     bool running = true;
     SDL_Event event;
@@ -265,7 +279,9 @@ int main() {
     }
     
     if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+    #ifdef _WIN32
     CloseHandle(serialPort);
+    #endif
     SDL_GameControllerClose(controller);
     SDL_Quit();
     return 0;
