@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
+#include <memory>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -11,7 +12,9 @@
 #include <initguid.h>
 #include <devguid.h>
 #endif
+
 #include "environment_manager.h"
+#include "serial_port.h"
 
 // Global variables for managing repeated commands.
 SDL_TimerID axisTimerID = 0;
@@ -27,71 +30,6 @@ Uint32 AxisTimerCallback(Uint32 interval, void* param) {
     SDL_PushEvent(&event);
     return interval; // Reschedule the timer to run repeatedly.
 }
-
-#ifdef _WIN32
-HANDLE openSerialPort(std::string &serialPort) {
-    HANDLE hSerial = CreateFileA(serialPort.c_str(),
-                                GENERIC_READ | GENERIC_WRITE,
-                                0,
-                                nullptr,
-                                OPEN_EXISTING,
-                                0,
-                                nullptr);
-    if (hSerial == INVALID_HANDLE_VALUE) {
-        std::cerr << "Error opening " << serialPort << ". Error code: " << GetLastError() << std::endl;
-        return INVALID_HANDLE_VALUE;
-    }
-    
-    // Set serial port parameters.
-    DCB dcbSerialParams = {0};
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams)) {
-        std::cerr << "Error getting serial port state." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
-    }
-    
-    dcbSerialParams.BaudRate = CBR_9600;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity   = NOPARITY;
-    
-    if (!SetCommState(hSerial, &dcbSerialParams)) {
-        std::cerr << "Error setting serial port state." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
-    }
-    
-    // Set timeouts for read/write operations.
-    COMMTIMEOUTS timeouts = {0};
-    timeouts.ReadIntervalTimeout = 50;
-    timeouts.ReadTotalTimeoutConstant = 50;
-    timeouts.ReadTotalTimeoutMultiplier = 10;
-    timeouts.WriteTotalTimeoutConstant = 50;
-    timeouts.WriteTotalTimeoutMultiplier = 10;
-    
-    if (!SetCommTimeouts(hSerial, &timeouts)) {
-        std::cerr << "Error setting timeouts." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
-    }
-    
-    return hSerial;
-}
-#endif
-
-#ifdef _WIN32
-void arduinoCommunication(HANDLE serialPort, int command) {
-    std::string msg = std::to_string(command) + "\n";
-    DWORD bytesWritten;
-    if (!WriteFile(serialPort, msg.c_str(), (DWORD)msg.size(), &bytesWritten, nullptr)) {
-        std::cerr << "Failed to write to serial port. Error code: " << GetLastError() << std::endl;
-    }  
-
-    // clear input and output buffer
-    PurgeComm(serialPort, 0b1100);
-}
-#endif
 
 SDL_GameController* detectController(){
     int numJoysticks = SDL_NumJoysticks();
@@ -120,24 +58,29 @@ int main() {
     EnvironmentManager envManager;
     envManager.loadEnvironment("./.env");
 
-    bool serialPortSet = false;
-    std::string serialPortName;
+    std::optional<std::string> serialPortName = envManager.get("ARDUINO_SERIAL_PORT");
 
-    if (envManager.exists("ARDUINO_SERIAL_PORT")) {
-        // Doesn't check for std::nullopt due to previous .exists() call which prevents UB
-        serialPortName = envManager.get("ARDUINO_SERIAL_PORT").value();
-        
-        #ifdef _WIN32
-        if (serialPortName.substr(0, 4) != "\\\\.\\") {
-            serialPortName = "\\\\.\\" + serialPortName;
+    SerialPort serialPort = [&]() -> SerialPort {
+        if (serialPortName.has_value()) {
+            serialPort = SerialPort(serialPortName.value());
+            std::cout << "Arduino's serial port set to " << serialPort.getName() << std::endl;
+
+            return serialPort;
+        } else {
+            std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
+
+            std::optional<SerialPort> result = findArduinoSerialPort();
+            if (result.has_value()) {
+                serialPort = result.value();
+                std::cout << "Found " << serialPort.getName() << ". Defaulting to serial port " << serialPort.getName() << std::endl;
+
+                return serialPort;
+            } else {
+                std::cerr << "No Arduino serial port found.";
+                exit(-1);
+            }
         }
-        #endif
-        
-        std::cout << "Arduino's serial port set to " << serialPortName << std::endl;
-        serialPortSet = true;
-    } else {
-        std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
-    }
+    }();
     
     // Initialize SDL subsystems.
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
@@ -150,51 +93,6 @@ int main() {
         SDL_Quit();
         return -1;
     }
-
-    if (!serialPortSet) {
-        #ifdef _WIN32
-        HDEVINFO ports = SetupDiGetClassDevsW(&GUID_DEVCLASS_PORTS, L"USB", nullptr, DIGCF_PRESENT);
-    
-        SP_DEVINFO_DATA info;
-        info.cbSize = sizeof(SP_DEVINFO_DATA);
-    
-        for (int i = 0; SetupDiEnumDeviceInfo(ports, i, &info); ++i) {
-            unsigned char deviceName[256];
-            SetupDiGetDeviceRegistryPropertyA(ports, &info, SPDRP_FRIENDLYNAME, nullptr, deviceName, sizeof(deviceName), nullptr);
-    
-            HKEY hKey = SetupDiOpenDevRegKey(ports, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-            TCHAR portName[256];
-            DWORD portNameSize = sizeof(portName);
-            RegQueryValueExA(hKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize);
-            RegCloseKey(hKey);
-    
-            if (deviceName != nullptr) {
-                if (std::string((char *)deviceName).substr(0, 7) == "Arduino") {
-                    serialPortName = std::string((char *)portName);
-
-                    if (serialPortName.substr(0, 5) != "\\\\.\\") {
-                        serialPortName = "\\\\.\\" + serialPortName;
-                    }
-    
-                    std::cout << "Found " << deviceName << ". Defaulting to serial port " << serialPortName << std::endl;
-                    serialPortSet = true;
-                    break;
-                }
-            }
-        }
-    
-        SetupDiDestroyDeviceInfoList(&info);
-        #endif
-    }
-
-    #ifdef _WIN32
-    HANDLE serialPort = openSerialPort(serialPortName);
-    if (serialPort == INVALID_HANDLE_VALUE) {
-        SDL_GameControllerClose(controller);
-        SDL_Quit();
-        return -1;
-    }
-    #endif
     
     bool running = true;
     SDL_Event event;
@@ -208,7 +106,11 @@ int main() {
             // Custom event posted by the timer.
             else if (event.type == SDL_USEREVENT) {
                 int command = event.user.code;
-                arduinoCommunication(serialPort, command);
+                std::optional<SerialPortError> result = serialPort.write(std::to_string(command));
+
+                if (result.has_value()) {
+                    std::cerr << "Failed to write to serial port. Error code: " << GetLastError() << std::endl;
+                }
             }
             // Process controller axis motions.
             else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
@@ -238,9 +140,6 @@ int main() {
     }
     
     if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
-    #ifdef _WIN32
-    CloseHandle(serialPort);
-    #endif
     SDL_GameControllerClose(controller);
     SDL_Quit();
     return 0;
