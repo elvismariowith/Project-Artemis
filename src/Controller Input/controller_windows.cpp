@@ -3,10 +3,7 @@
 #include <SDL2/SDL_gamecontroller.h>
 #include <iostream>
 #include <string>
-#include <fstream>
-#include <filesystem>
 #include <cstdlib>
-#include <optional>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -14,46 +11,7 @@
 #include <initguid.h>
 #include <devguid.h>
 #endif
-
-bool is_valid_filepath(const std::string& filePath) {
-    std::filesystem::path path(filePath);
-    return std::filesystem::exists(path);
-}
-
-void loadEnv(const std::string& filePath) {
-    if (!is_valid_filepath(filePath)) {
-        std::cerr << "File path is invalid." << std::endl;
-        return;
-    }
-
-    std::ifstream file(filePath);
-
-    if (file.is_open()) {
-        std::string line;
-
-        while (std::getline(file, line)) {
-            size_t delimiterPos = line.find("=");
-
-            if (delimiterPos != std::string::npos) {
-                std::string var = line.substr(0, delimiterPos);
-                std::string value = line.substr(delimiterPos + 1, delimiterPos);
-
-                if (value[0] == '"' && value[value.length() - 1] == '"') {
-                    value = value.substr(1, value.length() - 2);
-                }
-
-                #ifdef _WIN32
-                putenv((var + "=" + value).c_str()); // Overwrite if exists
-                #endif
-            }
-        }
-
-        file.close();
-    } else {
-        std::cerr << "Error opening .env file: " << filePath << std::endl;
-        return;
-    }
-}
+#include "environment_manager.h"
 
 // Global variables for managing repeated commands.
 SDL_TimerID axisTimerID = 0;
@@ -157,44 +115,6 @@ SDL_GameController* detectController(){
     
     return controller;
 }
-
-/// Manager to work with and load variables from the environment and load `.env` files.
-class EnvironmentManager {
-    public:
-    /// Creates an empty `EnvironmentManager` to manage environment variables.
-    EnvironmentManager() noexcept { }
-
-    /// Loads a `.env` file from the given `path`.
-    /// If no path is given it defaults to searching for a `.env` file in the current directory.
-    /// Returns `false` if it could not load the requested `.env` file.
-    /// Returns `true` otherwise.
-    bool loadEnvironment(const std::string &path = "./.env") {
-        if (!is_valid_filepath(path)) {
-            return false;
-        }
-
-        loadEnv(path);
-        return true;
-    }
-
-    /// Checks if the given variable exists in the environment.
-    /// Return `true` if the variable exists, `false` otherwise.
-    bool exists(const std::string &variable) {
-        return std::getenv(variable.c_str()) != nullptr;
-    }
-
-    /// Gets the value of the given `variable` from the environment.
-    /// Returns `std::nullopt` if the variable doesn't exist. Returns `std::string` otherwise.
-    std::optional<std::string> get(const std::string &variable) {
-        const char *value = std::getenv(variable.c_str());
-
-        if (value == nullptr) {
-            return std::nullopt;
-        }
-
-        return std::string(value);
-    }
-};
 
 int main() {
     EnvironmentManager envManager;
