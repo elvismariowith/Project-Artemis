@@ -1,9 +1,5 @@
-#include <dlib/dnn.h>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing.h>
-#include <dlib/image_io.h>
-#include <dlib/opencv.h>
-#include <opencv2/opencv.hpp>
+
+/*#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
 #include <string>
@@ -130,3 +126,4 @@ int test()
 
     return 0;
 }
+*/

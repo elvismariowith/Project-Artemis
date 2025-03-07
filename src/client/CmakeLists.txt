@@ -1,6 +1,0 @@
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-link_directories(${Boost_LIBRARY_DIRS})
-
-add_library(client client.cpp client.hpp)
-target_link_libraries(client ${Boost_LIBRARIES})

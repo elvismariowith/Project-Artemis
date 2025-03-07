@@ -4,21 +4,28 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(VCPKG_PLATFORM_TOOLSET v142)
-add_subdirectory(src/client)
-
-add_executable(main src/main.cpp)
 
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
-target_link_libraries(main ${Boost_LIBRARIES})
+find_package(OpenCV REQUIRED)
+include_directories(${OpenCV_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
-find_library(client src/client)
+add_library(client src/client/client.cpp src/client/client.hpp)
+target_link_libraries(client ${Boost_LIBRARIES})
+
+add_library(vision src/face_recognition/vision.cpp src/face_recognition/vision.hpp)
+target_link_libraries(vision ${OpenCV_LIBS})
+
+include_directories(src/face_recognition)
+link_directories(src/face_recognition)
 include_directories(src/client)
 link_directories(src/client)
 
-find_library(vision src/face_recognition)
 
-
+add_executable(main src/main.cpp)
+target_link_libraries(vision client)
 target_link_libraries(main client)
+target_link_libraries(main vision)
 

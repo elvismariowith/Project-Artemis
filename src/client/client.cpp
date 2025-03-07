@@ -14,7 +14,7 @@ using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 std::string client::getImage()
 {
-    auto const host = "192.168.3.13";
+    auto const host = "192.168.245.13";
     auto const port = "80";
     auto const target = "/stream";
     int version = 11;
@@ -87,7 +87,6 @@ std::string client::getImage()
     parser.on_chunk_body(body_cb);
     for (int i = 0; i < 3; i++)
     {
-        std::cout<<i<<'\n';
         // Read as much as we can. When we reach the end of the chunk, the chunk
         // body callback will make the read return with the end_of_chunk error.
         http::read(stream, buffer, parser, ec);
