@@ -17,6 +17,8 @@ find_library(client src/client)
 include_directories(src/client)
 link_directories(src/client)
 
+find_library(vision src/face_recognition)
+
 
 target_link_libraries(main client)
 
