@@ -135,6 +135,11 @@ int main() {
                     }
                 }
             }
+            else if (event.type == SDL_CONTROLLERBUTTONDOWN){
+                if (event.cbutton.button == SDL_CONTROLLERBUTTON){
+                    sdt::cout << "X buttonn pressed!\n" << std::endl;
+                }
+            }
         }
         SDL_Delay(1); // A short delay to prevent a tight busy-loop.
     }
