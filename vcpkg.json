@@ -1,0 +1,15 @@
+{
+  "dependencies": [
+    "boost",
+    {
+      "name":"opencv4",
+      "default-features":true,
+      "platform":"windows",
+      "features":[
+        "contrib"
+      ]
+    }
+    ,
+    "sdl2"
+  ]
+}

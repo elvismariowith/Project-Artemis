@@ -14,7 +14,7 @@ using tcp = net::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 std::string client::getImage()
 {
-    auto const host = "192.168.245.13";
+    auto const host = "192.168.5.30";
     auto const port = "80";
     auto const target = "/stream";
     int version = 11;
