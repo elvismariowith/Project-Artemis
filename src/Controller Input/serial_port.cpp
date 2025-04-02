@@ -1,3 +1,4 @@
+// FILE CONTROLS THE SETTINGS AND THE PARAMETERS OF THE SELECTED SERIAL PORT
 #include <string>
 #include <iostream>
 #include "serial_port.h"
