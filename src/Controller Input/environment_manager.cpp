@@ -1,3 +1,5 @@
+// FILE USED TO DYANMICALLY FIND THE SERIAL PORT THAT THE ARDUINO IS CONNECTED TO 
+// USES WINDOWS API CURRENTLY
 #include <environment_manager.h>
 #include <string>
 #include <optional>
