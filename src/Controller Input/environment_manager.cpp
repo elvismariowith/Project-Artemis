@@ -1,4 +1,4 @@
-#include <environment_manager.h>
+#include "environment_manager.h"
 #include <string>
 #include <optional>
 #include <filesystem>
@@ -17,49 +17,41 @@ void loadEnv(const std::string& filePath) {
     }
 
     std::ifstream file(filePath);
-
-    if (file.is_open()) {
-        std::string line;
-
-        while (std::getline(file, line)) {
-            size_t delimiterPos = line.find("=");
-
-            if (delimiterPos != std::string::npos) {
-                std::string var = line.substr(0, delimiterPos);
-                std::string value = line.substr(delimiterPos + 1, delimiterPos);
-                
-                // Get rid of the opening double quote
-                if (value[0] == '"') {
-                    value = value.substr(1);
-                }
-
-                // Get rid of closing double quote
-                size_t index = value.find_first_of('"');
-                if (index) {
-                    value = value.substr(0, index);
-                }
-
-                #ifdef _WIN32
-                putenv((var + "=" + value).c_str()); // Overwrite if exists
-                #endif
-            }
-        }
-
-        file.close();
-    } else {
+    if (!file.is_open()) {
         std::cerr << "Error opening .env file: " << filePath << std::endl;
         return;
     }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Skip comments or blank lines
+        if (line.empty() || line[0] == '#') continue;
+
+        size_t delimiterPos = line.find('=');
+        if (delimiterPos == std::string::npos) continue;
+
+        std::string var = line.substr(0, delimiterPos);
+        std::string value = line.substr(delimiterPos + 1);
+
+        // Trim surrounding quotes if present
+        if (!value.empty() && value.front() == '"') value.erase(0, 1);
+        if (!value.empty() && value.back() == '"') value.pop_back();
+
+        // Actually set the environment variable
+        setenv(var.c_str(), value.c_str(), 1); // overwrite = 1
+    }
+
+    file.close();
 }
 
 bool EnvironmentManager::loadEnvironment(const std::string &path) const {
-        if (!is_valid_filepath(path)) {
-            return false;
-        }
-
-        loadEnv(path);
-        return true;
+    if (!is_valid_filepath(path)) {
+        return false;
     }
+
+    loadEnv(path);
+    return true;
+}
 
 bool EnvironmentManager::exists(const std::string &variable) const {
     return std::getenv(variable.c_str()) != nullptr;
@@ -67,10 +59,6 @@ bool EnvironmentManager::exists(const std::string &variable) const {
 
 std::optional<std::string> EnvironmentManager::get(const std::string &variable) const {
     const char *value = std::getenv(variable.c_str());
-
-    if (value == nullptr) {
-        return std::nullopt;
-    }
-
+    if (value == nullptr) return std::nullopt;
     return std::string(value);
 }

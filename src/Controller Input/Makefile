@@ -1,33 +1,24 @@
-# Compiler
+# Name of the output binary
+TARGET = controller_linux
+
+# Source files
+SRCS = controller_linux.cpp environment_manager.cpp serial_port.cpp
+
+# Compiler and flags
 CXX = g++
+CXXFLAGS = -Wall -std=c++17
 
-# Compiler flags
-CXXFLAGS = -Wall -Wextra -std=c++17 $(shell sdl2-config --cflags)
+# SDL2 include and library paths (use `sdl2-config` to get them)
+SDL_CFLAGS := $(shell sdl2-config --cflags)
+SDL_LDLIBS := $(shell sdl2-config --libs)
 
-# Linker flags
-LDFLAGS = $(shell sdl2-config --libs) -lSDL2
-
-# Executable name
-TARGET = PS4read
-
-# All .cpp files in the directory (still not sure if this is a good idea lol)
-SRCS = $(wildcard *.cpp)
-
-# Object files
-OBJS = $(SRCS:.cpp=.o)
-
-# Default target
+# Final build rule
 all: $(TARGET)
 
-# Build the executable
-$(TARGET): $(OBJS)
-	$(CXX) $(OBJS) -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(SRCS)
+	$(CXX) $(CXXFLAGS) $(SDL_CFLAGS) -o $@ $^ $(SDL_LDLIBS)
 
-# Compile source files into object files
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Clean build files
+# Clean up build files
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(TARGET)
 

@@ -1,33 +1,29 @@
+#ifndef SERIAL_PORT_H
+#define SERIAL_PORT_H
+
 #include <optional>
 #include <string>
 #include <memory>
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
+
 
 enum SerialPortError {
     InvalidHandleValue,
     WriteError,
 };
 
-#ifdef _WIN32
-HANDLE openSerialPort(std::string &serialPort);
-#endif
-
 /// Wrapper over os-dependent serial port
 class SerialPort {
     std::string name;
-    std::shared_ptr<void> serialPort;
+    int fd = -1;
 
     public:
-    /// WINDOWS: Accepts port names such as `COM7` and `\\.\COM7`
     SerialPort(std::string name);
-
+    ~SerialPort();
     /// Writes the given `message` to the serial port, appending a `\n` character at the end
     /// to signal the end of the message being written.
     /// Throws `SerialPortError::WriteError` in the case of an error.
-    std::optional<SerialPortError> write(std::string message) const;
+    std::optional<SerialPortError> write(int command);
 
     /// Returns the name of the serial port
     const std::string& getName() const noexcept {
@@ -36,3 +32,5 @@ class SerialPort {
 };
 
 std::optional<SerialPort> findArduinoSerialPort();
+
+#endif
