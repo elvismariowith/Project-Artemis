@@ -1,4 +1,5 @@
 #include "serial_port.h"
+// FILE CONTROLS THE SETTINGS AND THE PARAMETERS OF THE SELECTED SERIAL PORT
 #include <string>
 #include <iostream>
 #include <fcntl.h>
@@ -81,4 +82,5 @@ std::optional<SerialPort> findArduinoSerialPort() {
 
     std::cerr << "No accessible /dev/ttyACM* ports found." << std::endl;
     return std::nullopt;
+    #endif
 }
