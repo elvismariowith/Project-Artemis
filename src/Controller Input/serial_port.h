@@ -33,6 +33,14 @@ class SerialPort {
     const std::string& getName() const noexcept {
         return this->name;
     }
+
+    // Disable copying
+    SerialPort(const SerialPort&) = delete;
+    SerialPort& operator=(const SerialPort&) = delete;
+
+    // Enable moving
+    SerialPort(SerialPort&& other) noexcept;
+    SerialPort& operator=(SerialPort&& other) noexcept;
 };
 
 std::optional<SerialPort> findArduinoSerialPort();

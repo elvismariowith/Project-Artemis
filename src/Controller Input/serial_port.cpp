@@ -109,24 +109,45 @@ std::optional<SerialPort> findArduinoSerialPort() {
 
     for (int i = 0; SetupDiEnumDeviceInfo(ports, i, &info); ++i) {
         unsigned char deviceName[256];
-        SetupDiGetDeviceRegistryPropertyA(ports, &info, SPDRP_FRIENDLYNAME, nullptr, deviceName, sizeof(deviceName), nullptr);
 
-        HKEY hKey = SetupDiOpenDevRegKey(ports, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-        TCHAR portName[256];
-        DWORD portNameSize = sizeof(portName);
-        RegQueryValueExA(hKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize);
-        RegCloseKey(hKey);
+        bool success = SetupDiGetDeviceRegistryPropertyA(ports, &info, SPDRP_FRIENDLYNAME, nullptr, deviceName, sizeof(deviceName), nullptr);
 
-        if (deviceName != nullptr) {
+        if (success) {
             if (std::string((char *)deviceName).substr(0, 7) == "Arduino") {
-                SetupDiDestroyDeviceInfoList(&info);
+                HKEY hKey = SetupDiOpenDevRegKey(ports, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+                TCHAR portName[256];
+                DWORD portNameSize = sizeof(portName);
+                
+                if (RegQueryValueExA(hKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize) != ERROR_SUCCESS) {
+                    std::cerr << "Failed to get port name from registry." << std::endl;
+                    RegCloseKey(hKey);
+                    continue;
+                }
+                RegCloseKey(hKey);
+        
+                std::cout << "Found Arduino on: " << portName << std::endl;
+        
+                SetupDiDestroyDeviceInfoList(ports);
                 return SerialPort(std::string((char *)portName));
             }
         }
     }
 
-    SetupDiDestroyDeviceInfoList(&info);
+    SetupDiDestroyDeviceInfoList(ports);
 
     return std::nullopt;
     #endif
+}
+
+SerialPort::SerialPort(SerialPort&& other) noexcept {
+    this->name = std::move(other.name);
+    this->serialPort = std::move(other.serialPort);
+}
+
+SerialPort& SerialPort::operator=(SerialPort&& other) noexcept {
+    if (this != &other) {
+        this->name = std::move(other.name);
+        this->serialPort = std::move(other.serialPort);
+    }
+    return *this;
 }
