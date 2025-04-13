@@ -24,20 +24,19 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
-# link_directories(${Boost_LIBRARY_DIRS})
-# add_library(client src/client/client.cpp src/client/client.hpp)
-# target_link_libraries(client ${Boost_LIBRARIES})
+link_directories(${Boost_LIBRARY_DIRS})
+add_library(client src/client/client.cpp src/client/client.hpp)
+target_link_libraries(client ${Boost_LIBRARIES})
 
-set(vision_DIR "src/face_recognition/")
 
 include_directories(${vision_DIR})
 add_library(vision src/face_recognition/vision.cpp src/face_recognition/vision.hpp ${faces_src})
 target_link_libraries(vision ${OpenCV_LIBS})
+target_link_libraries(vision client)
 
 add_executable(main main.cpp)
-# target_link_libraries(main ${OpenCV_LIBS})
-# # target_link_libraries(main client)
 target_link_libraries(main vision)
+
 
 message(${OpenCV_INCLUDE_DIRS})
 

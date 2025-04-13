@@ -11,7 +11,7 @@
 #include <opencv2/face.hpp>
 
 #include "vision.hpp"
-// #include "client.hpp"
+#include "client.hpp"
 
 const std::string data_path = "../src/face_recognition/faces/";
 using namespace cv;
@@ -46,22 +46,19 @@ Ptr<EigenFaceRecognizer> setupEigenFacesModel(Size& image_size){
 
 void automatedMode()
 {
-    Size image_size(200,300);
+    Size image_size(500,500);
     std::string windowName = "test";
     Ptr<EigenFaceRecognizer> model = setupEigenFacesModel(image_size);
-    VideoCapture capture(0);
     if (capture.isOpened())
     {
         while (true)
         {
             if(waitKey(1) > 10) break;
-            // std::string imgBinary = client::getImage();
-            // std::vector<uchar> data(imgBinary.begin(),imgBinary.end());
-            // Mat image = imdecode(data,1);
-            Mat image,gray_image,image_resized;
-            capture.read(image);
+            std::string imgBinary = client::getImage();
+            std::vector<uchar> data(imgBinary.begin(),imgBinary.end());
+            Mat image = imdecode(data,1);
+            Mat gray_image,image_resized;
             imshow(windowName, image);
-            
             cvtColor(image,gray_image,COLOR_BGR2GRAY);
             resize(gray_image,image_resized,image_size);
             int predicted_label = -1;

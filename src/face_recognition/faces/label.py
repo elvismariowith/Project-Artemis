@@ -8,3 +8,5 @@ with open('info.csv','w',newline='') as f:
         print(file)
         if file.startswith('hector'):
             writer.writerow([file,1])
+        elif file.startswith('Daniel'):
+            writer.writerow([file,2])
