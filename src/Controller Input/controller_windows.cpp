@@ -62,19 +62,22 @@ int main() {
 
     SerialPort serialPort = [&]() -> SerialPort {
         if (serialPortName.has_value()) {
-            serialPort = SerialPort(serialPortName.value());
-            std::cout << "Arduino's serial port set to " << serialPort.getName() << std::endl;
-
-            return serialPort;
+            SerialPort port(serialPortName.value());
+            std::cout << "Arduino's serial port set to " << port.getName() << std::endl;
+            return std::move(port);
         } else {
             std::cout << "No ARDUINO_SERIAL_PORT set. Defaulting to automatic finding." << std::endl;
-
+    
             std::optional<SerialPort> result = findArduinoSerialPort();
+    
+            std::cout << "here" << std::endl;
             if (result.has_value()) {
-                serialPort = result.value();
-                std::cout << "Found " << serialPort.getName() << ". Defaulting to serial port " << serialPort.getName() << std::endl;
-
-                return serialPort;
+                std::cout << "here2" << std::endl;
+                SerialPort port = std::move(*result);
+                std::cout << "here3" << std::endl;
+    
+                std::cout << "Found " << port.getName() << ". Defaulting to serial port " << port.getName() << std::endl;
+                return std::move(port);
             } else {
                 std::cerr << "No Arduino serial port found.";
                 exit(-1);
@@ -93,6 +96,19 @@ int main() {
         SDL_Quit();
         return -1;
     }
+
+    SDL_Window* window = SDL_CreateWindow(
+        "Input Window",
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        100, 100, // Small window size
+        SDL_WINDOW_SHOWN // Or use SDL_WINDOW_SHOWN if you want to see it
+    );
+    
+    if (!window) {
+        std::cerr << "Failed to create SDL window: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return -1;
+    }
     
     bool running = true;
     SDL_Event event;
@@ -100,6 +116,8 @@ int main() {
     while (running) {
         // Process all pending events.
         while (SDL_PollEvent(&event)) {
+            std::cout<<event.type<<std::endl;
+
             if (event.type == SDL_QUIT) {
                 running = false;
             }
@@ -110,6 +128,51 @@ int main() {
 
                 if (result.has_value()) {
                     std::cerr << "Failed to write to serial port. Error code: " << GetLastError() << std::endl;
+                }
+            }
+            // Keyboard key down
+            else if (event.type == SDL_KEYDOWN) {
+                std::cout<<"key down"<<std::endl;
+                if (event.key.keysym.sym == SDLK_RIGHT) {
+                    if (currentDirection != 1) {
+                        currentDirection = 1;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr);
+                    }
+                } else if (event.key.keysym.sym == SDLK_LEFT) {
+                    if (currentDirection != -1) {
+                        currentDirection = -1;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr);
+                    }
+                } else if (event.key.keysym.sym == SDLK_UP) {
+                    if (currentDirection != 2) {
+                        currentDirection = 2;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr);
+                    }
+                } else if (event.key.keysym.sym == SDLK_DOWN) {
+                    if (currentDirection != -2) {
+                        currentDirection = -2;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr);
+                    }
+                }
+            }
+            // Keyboard key up
+            else if (event.type == SDL_KEYUP) {
+                if (event.key.keysym.sym == SDLK_RIGHT || event.key.keysym.sym == SDLK_LEFT) {
+                    currentDirection = 0;
+                    if (axisTimerID != 0) {
+                        SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = 0;
+                    }
+                } else if (event.key.keysym.sym == SDLK_UP || event.key.keysym.sym == SDLK_DOWN) {
+                    currentDirection = 0;
+                    if (axisTimerID != 0) {
+                        SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = 0;
+                    }
                 }
             }
             // Process controller axis motions.
@@ -135,14 +198,33 @@ int main() {
                     }
                 }
             }
-            else if (event.type == SDL_CONTROLLERBUTTONDOWN){
-                if (event.cbutton.button == SDL_CONTROLLERBUTTON){
-                    sdt::cout << "X buttonn pressed!\n" << std::endl;
+            else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY) {
+                int value = event.caxis.value;
+                if (value < -8000) {
+                    if (currentDirection != 2) { // Only change state when needed.
+                        currentDirection = 2;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr); // Repeat every 50ms.
+                    }
+                } else if (value > 8000) {
+                    if (currentDirection != -2) {
+                        currentDirection = -2;
+                        if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, nullptr);
+                    }
+                } else { // Axis in neutral position.
+                    currentDirection = 0;
+                    if (axisTimerID != 0) {
+                        SDL_RemoveTimer(axisTimerID);
+                        axisTimerID = 0;
+                    }
                 }
             }
         }
         SDL_Delay(1); // A short delay to prevent a tight busy-loop.
     }
+
+    SDL_DestroyWindow(window);
     
     if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
     SDL_GameControllerClose(controller);
