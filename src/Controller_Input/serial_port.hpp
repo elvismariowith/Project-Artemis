@@ -1,19 +1,18 @@
+#ifndef SERIAL_PORT_H
+#define SERIAL_PORT_H
+
 #include <optional>
 #include <string>
 #include <memory>
 
-#ifdef _WIN32
 #include <windows.h>
-#endif
 
 enum SerialPortError {
     InvalidHandleValue,
     WriteError,
 };
 
-#ifdef _WIN32
 HANDLE openSerialPort(std::string &serialPort);
-#endif
 
 /// Wrapper over os-dependent serial port
 class SerialPort {
@@ -42,5 +41,7 @@ class SerialPort {
     SerialPort(SerialPort&& other) noexcept;
     SerialPort& operator=(SerialPort&& other) noexcept;
 };
-
+SerialPort loadServo();
 std::optional<SerialPort> findArduinoSerialPort();
+
+#endif

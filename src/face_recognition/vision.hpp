@@ -2,5 +2,5 @@
 #define VISION
 
 
-void automatedMode();
+void automatedMode(bool isModelSaved);
 #endif

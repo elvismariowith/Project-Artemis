@@ -31,4 +31,4 @@ with open('info.csv','w',newline='') as f:
         elif file.startswith('elvis'):
             samples[5] += 1
             if samples[5] > MAX_SAMPLES: continue
-            writer.writerow([file,5])
+            writer.writerow([file,6])

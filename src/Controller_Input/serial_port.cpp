@@ -1,6 +1,6 @@
 #include <string>
 #include <iostream>
-#include "serial_port.h"
+#include "serial_port.hpp"
 
 #ifdef _WIN32
 #include <windows.h>
