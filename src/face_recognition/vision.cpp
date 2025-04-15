@@ -158,7 +158,13 @@ void automatedMode(bool isModelSaved)
         image = preprocessImage(image,imageSize);
         int predicted_label = -1;
         double confidence = 0.0;
-        model->predict(image, predicted_label, confidence);
+        
+        std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
+        if (faces.empty()) continue; // No face detected, skip this frame
+
+        Mat faceROI = image(faces[0]); // take first detected face
+        resize(faceROI, faceROI, imageSize); // match training size
+        model->predict(faceROI, predicted_label, confidence);
         
         std::cout << predicted_label << " " << confidence <<" "<<framesDetected<<std::endl;
         
