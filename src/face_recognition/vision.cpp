@@ -129,7 +129,7 @@ int centerFace(){
 void automatedMode(bool isModelSaved)
 {
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
-    Size imageSize(350, 350);
+    Size imageSize(500, 500);
     std::string windowName = "test";
 
     CascadeClassifier faceCascade;
@@ -169,7 +169,7 @@ void automatedMode(bool isModelSaved)
         else{
             time_t current_time;
             time(&current_time);
-            if(difftime(last_time,current_time) > 5){
+            if(difftime(current_time,last_time) > 5){
                 framesDetectedPerPerson.assign(NUM_PERSONS,0);
                 last_time = 0;
             }
