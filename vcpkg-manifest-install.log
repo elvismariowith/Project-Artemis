@@ -1,0 +1,119 @@
+Loading dependency information for 151 packages...
+Detecting compiler hash for triplet arm64-linux...
+Compiler found: /usr/bin/c++
+The following packages will be built and installed:
+    boost:arm64-linux@1.86.0#1 -- git+https://github.com/microsoft/vcpkg@15e0de9e647ed1ddf684158c8dc629544c2fe53b
+  * boost-accumulators:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@9760bdb89b8de886df649835bb83c4fb573c8140
+  * boost-asio:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@ce757138eb7af2b214f21e2680814777b580b325
+  * boost-assign:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@bbc14db5ba67af01c1ed5cfef0205540e008b51b
+  * boost-beast:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@ce6db020fd6f96d0340dc88560cf05ac4c4402cc
+  * boost-bimap:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@579f4ea7cd9bcce4912db8d7aaf43aa1bcea5cf4
+  * boost-callable-traits:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@71d32d66d2ecffa25d7885b03396edc85914526d
+  * boost-charconv:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@36a282b1f3cf5b22dfa824edbb3eca619bba5f0a
+  * boost-circular-buffer:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@ff8f90c793df3b01e22b86fbfbcdcc27e6f4715a
+  * boost-compat:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@8fd908a39e31d22c5e3d6e935f8da02fa2706100
+  * boost-compatibility:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@759d9ee433d2de8f9178040dc4099e80375730d2
+  * boost-context:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@306765f81ddde7b69509b45679f1ea40e61ee87e
+  * boost-contract:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4c2ad20bcc097007c416525fde7835e76ac6e37b
+  * boost-convert:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@2516e0220475cc65230c3f0c25aa522b730196fd
+  * boost-coroutine:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@8e8c55041bd950518602014556a780c71e806470
+  * boost-coroutine2:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@98fb711f3eb857c129209b93fa3b4bbe604c23bd
+  * boost-crc:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0f3bcd96355850dc868e79c13053bd1cd24c4897
+  * boost-dll:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@8c4175d6784c52998e1196428b8d3f6aac13f841
+  * boost-fiber:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4f3698c5579c7641f51dd8a521c4f635d96ceadb
+  * boost-flyweight:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@b009b7937daa96c41f1afbba2693f507471e47d9
+  * boost-foreach:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@c1b6a769f2aeeec424ae03e7ca63de0ca4870508
+  * boost-geometry:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@23f3d606087b2bcac52aba2f817430ec3272d839
+  * boost-gil:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@3374bd66c7f74a66ffe34804df583db01eff4e03
+  * boost-graph:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0af645ccee76e0e72ecfcf7eb14661be5350e0c3
+  * boost-heap:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0ceb920848e00ea03d8932b546644bbff367a357
+  * boost-histogram:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@b93440e637983292c9c694b6cb04cf7a50e5b939
+  * boost-hof:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@d9000bafae71adfd3208c989e8e8633b58c209aa
+  * boost-icl:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@f88a6a51cab67f884cb24167b54928588dec9162
+  * boost-interprocess:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4b46ca2a0ef4d118cc25e45e6c621cd54c60db08
+  * boost-iostreams[bzip2,core,lzma,zlib,zstd]:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@485177da12bf8a3c09581def8abdd87456800d39
+  * boost-json:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@ac2b49b7ad148839f5c83ed0ba3f905ec70945a3
+  * boost-lambda2:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@741e34a4eb1475ad121a01b659c81ca2d7cbe406
+  * boost-leaf:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4e9361dbfb880d9bae2136e04263dace03567d33
+  * boost-local-function:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@57a2a6803a115f0f1e6bb0479cfdab7519e3e578
+  * boost-locale:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@7c32b6ed427108b71d25389337300c479a630507
+  * boost-lockfree:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@3227b820fe76dc3047f2725ac3ce50720ba03095
+  * boost-log:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@ded8f639da631b783e516d4ee3ad15a3f814c523
+  * boost-metaparse:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@7b68d070fb5d26493813a76d5d5c7e2e35a00692
+  * boost-msm:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0d02e6d0be94b50518a0b47be5c78631b560409b
+  * boost-multi-array:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@e8032a1d638bc8cdf4b7964cf2536f0a29c14e91
+  * boost-multiprecision:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@81b4e2619ca9f6ab4ea795eb2dadb3ed37f55ce2
+  * boost-mysql:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@213f4548c6f7ab4cbabf36634d7827687614c3cb
+  * boost-nowide:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@e9f6bfa6137d44eadd845f7c72379e811b10d6a8
+  * boost-odeint:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4527453f0f9252b3c16d3db95b2ba2824bc89751
+  * boost-outcome:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@af6984e0960cb6fcfe5ee65dea207ab86fb9bba4
+  * boost-parameter:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@3c40a45d196949795b2be3541851c291fb1844a8
+  * boost-parameter-python:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@b7c50e8467604b4831ff545543733b1cec8e12fa
+  * boost-pfr:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@c79390e03453c40e32849c241cf07981b29f5486
+  * boost-poly-collection:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@4bcdf6a4500a70d37b43adf4c7fd6212412d822e
+  * boost-polygon:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@c77496b9ecf1147488b44405e7a46a857a10fd81
+  * boost-process:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@8d093f051607733ee4c54d25ec38604a3bdbe385
+  * boost-program-options:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@c041e18f05bab17532f6fa5f6faf238a2effd3ff
+  * boost-property-map:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@22ad5d692b6b015fd84f1fa387dc74b2bc0ce45e
+  * boost-ptr-container:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0661add5e67697002238c0b3a33f8db1f6c7ab1d
+  * boost-python:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@998c661e973a9ad529cf4d74eb51af676c644ace
+  * boost-qvm:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@55fd0bf6c0cda8bb0227c546aa5308b8e11cd325
+  * boost-rational:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@eaf89627f4ab01c16a76fe46ea532221669b6a2a
+  * boost-redis:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@2550196816d0888c6b5bf8e56ad1661a06c4fa00
+  * boost-safe-numerics:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@1626ba143d5988feff992b0616cd04543d6e3626
+  * boost-scope-exit:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@59dfff48e5adaebade67c01436b2d04b628a582b
+  * boost-signals2:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@0d47661c21531ec81da587a8dcd098db005e8402
+  * boost-sort:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@bde7ae52190c4150e8d24728d4ed95043b3764b9
+  * boost-stacktrace[backtrace,core]:arm64-linux@1.86.0 -- git+https://github.com/microsoft/vcpkg@fbe31177be073a8765c33c48464ebbcc44f29a61
+  * bzip2[core,tool]:arm64-linux@1.0.8#6 -- git+https://github.com/microsoft/vcpkg@2d029da682847c5ebdc54e4dbea001331a02207e
+  * dbus[core,systemd]:arm64-linux@1.15.8#5 -- git+https://github.com/microsoft/vcpkg@ce28359a2d828a06b421d8a7b3841f83d98f0ed4
+  * expat:arm64-linux@2.6.4 -- git+https://github.com/microsoft/vcpkg@97dd7e516104f330e1bb5eafff10852211dbd2df
+  * gperf:arm64-linux@3.1#6 -- git+https://github.com/microsoft/vcpkg@590e19515bff5b0abc6d9f73ba20a19a71555a32
+  * libbacktrace:arm64-linux@2024-11-30 -- git+https://github.com/microsoft/vcpkg@c231fe43ac03b2250f605fac80e2cc80eb025bb8
+  * libcap:arm64-linux@2.73 -- git+https://github.com/microsoft/vcpkg@958892a0b06a8065844bcf29104e85f46b0cd743
+  * libffi:arm64-linux@3.4.6 -- git+https://github.com/microsoft/vcpkg@0ad381012102db5da196161ba7fc0a03a4dcb982
+  * libiconv:arm64-linux@1.17#5 -- git+https://github.com/microsoft/vcpkg@22817264465e37fbbde994c614aae7d07bc727c0
+  * liblzma:arm64-linux@5.6.3 -- git+https://github.com/microsoft/vcpkg@b5e5694620b41a4d668390e5d14fa2326e0afdc3
+  * libmount:arm64-linux@2.40 -- git+https://github.com/microsoft/vcpkg@e78ea57cae347c42d9b7cdc4d65c521f229e0ed4
+  * libsystemd:arm64-linux@256.4 -- git+https://github.com/microsoft/vcpkg@03b20e5c1a908db5d38dd3fad3fa074c10e6b04b
+  * libuuid:arm64-linux@1.0.3#14 -- git+https://github.com/microsoft/vcpkg@09be6774f518692bc418aa03623cc9dbc19e6516
+  * libxcrypt:arm64-linux@4.4.36#2 -- git+https://github.com/microsoft/vcpkg@825ff0426ce377f1e386f7effd1f3dfb5e218a64
+  * lz4:arm64-linux@1.10.0 -- git+https://github.com/microsoft/vcpkg@4f01eec10f515a428e914107c5188366380f8dd9
+  * openssl:arm64-linux@3.4.1 -- git+https://github.com/microsoft/vcpkg@d740be74dc7940c2b88e69db0b2d181024e1028c
+  * python3[core,extensions]:arm64-linux@3.11.11 -- git+https://github.com/microsoft/vcpkg@7aeb024f9b5e3927d3e37f145b85c85504bc51dd
+    sdl2[core,dbus,ibus,wayland,x11]:arm64-linux@2.30.12 -- git+https://github.com/microsoft/vcpkg@519decfc6f5bcc4be3b919c10e0792798f7c006f
+  * sqlite3[core,json1]:arm64-linux@3.49.0 -- git+https://github.com/microsoft/vcpkg@943b28204d93333f225d1f79486f7ab6f3e66295
+  * vcpkg-cmake-get-vars:arm64-linux@2024-09-22 -- git+https://github.com/microsoft/vcpkg@f23148add155147f3d95ae622d3b0031beb25acf
+  * vcpkg-get-python:arm64-linux@2025-02-09 -- git+https://github.com/microsoft/vcpkg@0a0384810888b341ad84b0e08559481ff9a82150
+  * vcpkg-tool-meson:arm64-linux@1.6.1 -- git+https://github.com/microsoft/vcpkg@dc948c67d7f1359319f801078422e996b0a89fd0
+  * zlib:arm64-linux@1.3.1 -- git+https://github.com/microsoft/vcpkg@3f05e04b9aededb96786a911a16193cdb711f0c9
+  * zstd:arm64-linux@1.5.6 -- git+https://github.com/microsoft/vcpkg@796171d4d359b6786b8e1380fb6da8e677a9087b
+Additional packages (*) will be modified to complete this operation.
+Restored 0 package(s) from /home/elvis/.cache/vcpkg/archives in 129 us. Use --debug to see more details.
+Installing 1/86 libbacktrace:arm64-linux@2024-11-30...
+Building libbacktrace:arm64-linux@2024-11-30...
+/home/elvis/vcpkg/triplets/community/arm64-linux.cmake: info: loaded community triplet from here. Community triplets are not built in the curated registry and are thus less likely to succeed.
+/home/elvis/.cache/vcpkg/registries/git-trees/c231fe43ac03b2250f605fac80e2cc80eb025bb8: info: installing from git registry git+https://github.com/microsoft/vcpkg@c231fe43ac03b2250f605fac80e2cc80eb025bb8
+-- Using cached ianlancetaylor-libbacktrace-1db85642e3fca189cf4e076f840a45d6934b2456.tar.gz
+-- Cleaning sources at /home/elvis/vcpkg/buildtrees/libbacktrace/src/d6934b2456-6c6e472fdb.clean. Use --editable to skip cleaning for the packages you specify.
+-- Extracting source /home/elvis/vcpkg/downloads/ianlancetaylor-libbacktrace-1db85642e3fca189cf4e076f840a45d6934b2456.tar.gz
+-- Using source at /home/elvis/vcpkg/buildtrees/libbacktrace/src/d6934b2456-6c6e472fdb.clean
+-- Getting CMake variables for arm64-linux-dbg
+-- Getting CMake variables for arm64-linux-rel
+CMake Error at scripts/cmake/vcpkg_configure_make.cmake:721 (message):
+  libbacktrace requires autoconf from the system package manager (example:
+  "sudo apt-get install autoconf")
+Call Stack (most recent call first):
+  /home/elvis/.cache/vcpkg/registries/git-trees/c231fe43ac03b2250f605fac80e2cc80eb025bb8/portfile.cmake:12 (vcpkg_configure_make)
+  scripts/ports.cmake:206 (include)
+
+
+error: building libbacktrace:arm64-linux failed with: BUILD_FAILED
+See https://learn.microsoft.com/vcpkg/troubleshoot/build-failures?WT.mc_id=vcpkg_inproduct_cli for more information.
+Elapsed time to handle libbacktrace:arm64-linux: 1.2 s
+Please ensure you're using the latest port files with `git pull` and `vcpkg update`.
+Then check for known issues at:
+  https://github.com/microsoft/vcpkg/issues?q=is%3Aissue+is%3Aopen+in%3Atitle+libbacktrace
+You can submit a new issue at:
+  https://github.com/microsoft/vcpkg/issues/new?title=[libbacktrace]+Build+error+on+arm64-linux&body=Copy%20issue%20body%20from%20%2Fhome%2Felvis%2FDocuments%2FGithub%2FProject-Artemis%2Fvcpkg_installed%2Fvcpkg%2Fissue_body.md
+
