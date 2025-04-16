@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-# set(CMAKE_CXX_COMPILER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.42.34433/bin/Hostx64/x64/cl.exe")
+set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 set(CMAKE_TOOLCHAIN_FILE "~/vcpkg/scripts/buildsystems/vcpkg.cmake")
 project(Artemis VERSION 1.0 DESCRIPTION "Torret" LANGUAGES CXX)
 
@@ -40,4 +40,3 @@ add_executable(main main.cpp)
 target_link_libraries(main vision)
 
 message(${OpenCV_INCLUDE_DIRS})
-
