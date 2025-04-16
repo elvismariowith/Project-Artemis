@@ -104,10 +104,11 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
             labels.push_back(atoi(classlabel.c_str()));
         }
     }
-    const int CONFIDENCE_THRESHOLD = 3000;
+    const int CONFIDENCE_THRESHOLD = 2500;
     model = FisherFaceRecognizer::create(0,CONFIDENCE_THRESHOLD);
     model->train(images, labels);
     model->save(MODEL_PATH);
+    std::cout<<"Model loaded successfully\n";
     return model;
 }
 int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
@@ -129,7 +130,7 @@ int centerFace(){
 void automatedMode(bool isModelSaved)
 {
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
-    Size imageSize(500, 500);
+    Size imageSize(350, 350);
     std::string windowName = "test";
 
     CascadeClassifier faceCascade;
@@ -154,18 +155,24 @@ void automatedMode(bool isModelSaved)
         Mat image = getImage(imageSize);
         //capture.read(image);
         //detectAndDisplay(image,faceCascade,eyeCascade);
-        imshow(windowName,image);
-        image = preprocessImage(image,imageSize);
-        int predicted_label = -1;
-        double confidence = 0.0;
-        
         std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
         if (faces.empty()) continue; // No face detected, skip this frame
 
-        Mat faceROI = image(faces[0]); // take first detected face
-        resize(faceROI, faceROI, imageSize); // match training size
-        model->predict(faceROI, predicted_label, confidence);
         
+        //displayFaces(faces,image);
+        cv::Size inflationSize(50,50);
+        faces[0] += inflationSize;
+
+        Rect imageRect = Rect(0,0,image.cols,image.rows);
+        Mat faceROI = image(faces[0] & imageRect); // take first detected face
+        imshow("test",faceROI);
+        faceROI = preprocessImage(image,imageSize); // match training size
+        
+
+        
+        int predicted_label = -1;
+        double confidence = 0.0;
+        model->predict(faceROI, predicted_label, confidence);
         std::cout << predicted_label << " " << confidence <<" "<<framesDetected<<std::endl;
         
         if(predicted_label != -1) framesDetectedPerPerson[predicted_label-1]++;

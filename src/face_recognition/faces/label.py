@@ -2,7 +2,7 @@ import csv
 import glob
 import os
 
-MAX_SAMPLES = 15
+MAX_SAMPLES = 100
 with open('info.csv','w',newline='') as f:
     writer = csv.writer(f)
     samples = [0 for _ in range(6)] 
