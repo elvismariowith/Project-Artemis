@@ -1,132 +1,92 @@
 #include <string>
 #include <iostream>
+#include <memory>
+#include <optional>
 #include "serial_port.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#include <SetupAPI.h>
-#include <devguid.h>
-#endif
+#ifndef _WIN32
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <cstring>
 
-#ifdef _WIN32
-HANDLE openSerialPort(std::string &serialPort) {
-    HANDLE hSerial = CreateFileA(serialPort.c_str(),
-                                GENERIC_READ | GENERIC_WRITE,
-                                0,
-                                nullptr,
-                                OPEN_EXISTING,
-                                0,
-                                nullptr);
-    if (hSerial == INVALID_HANDLE_VALUE) {
-        std::cerr << "Error opening " << serialPort << ". Error code: " << GetLastError() << std::endl;
-        return INVALID_HANDLE_VALUE;
+int openSerialPort(const std::string &serialPort) {
+    int fd = open(serialPort.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
+    if (fd < 0) {
+        std::cerr << "Error opening " << serialPort << ": " << strerror(errno) << std::endl;
+        return -1;
     }
-    
-    // Set serial port parameters.
-    DCB dcbSerialParams = {0};
-    dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
-    if (!GetCommState(hSerial, &dcbSerialParams)) {
-        std::cerr << "Error getting serial port state." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
+
+    struct termios tty;
+    memset(&tty, 0, sizeof tty);
+    if (tcgetattr(fd, &tty) != 0) {
+        std::cerr << "Error getting tty attributes: " << strerror(errno) << std::endl;
+        close(fd);
+        return -1;
     }
-    
-    dcbSerialParams.BaudRate = CBR_9600;
-    dcbSerialParams.ByteSize = 8;
-    dcbSerialParams.StopBits = ONESTOPBIT;
-    dcbSerialParams.Parity   = NOPARITY;
-    
-    if (!SetCommState(hSerial, &dcbSerialParams)) {
-        std::cerr << "Error setting serial port state." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
+
+    cfsetospeed(&tty, B9600);
+    cfsetispeed(&tty, B9600);
+
+    tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
+    tty.c_iflag &= ~IGNBRK;                         // disable break processing
+    tty.c_lflag = 0;                                // no signaling chars, no echo, no canonical processing
+    tty.c_oflag = 0;                                // no remapping, no delays
+    tty.c_cc[VMIN]  = 1;                            // read doesn't block
+    tty.c_cc[VTIME] = 5;                            // 0.5 seconds read timeout
+
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY);         // shut off xon/xoff ctrl
+    tty.c_cflag |= (CLOCAL | CREAD);               // ignore modem controls, enable reading
+    tty.c_cflag &= ~(PARENB | PARODD);             // no parity
+    tty.c_cflag &= ~CSTOPB;                        // 1 stop bit
+    tty.c_cflag &= ~CRTSCTS;                       // no hardware flow control
+
+    if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+        std::cerr << "Error setting tty attributes: " << strerror(errno) << std::endl;
+        close(fd);
+        return -1;
     }
-    
-    // Set timeouts for read/write operations.
-    COMMTIMEOUTS timeouts = {0};
-    timeouts.ReadIntervalTimeout = 50;
-    timeouts.ReadTotalTimeoutConstant = 50;
-    timeouts.ReadTotalTimeoutMultiplier = 10;
-    timeouts.WriteTotalTimeoutConstant = 50;
-    timeouts.WriteTotalTimeoutMultiplier = 10;
-    
-    if (!SetCommTimeouts(hSerial, &timeouts)) {
-        std::cerr << "Error setting timeouts." << std::endl;
-        CloseHandle(hSerial);
-        return INVALID_HANDLE_VALUE;
-    }
-    
-    return hSerial;
+
+    return fd;
 }
-#endif
 
-// TODO: Fix copy/move destroying serialPort pointer
 SerialPort::SerialPort(std::string name) {
-    #ifdef _WIN32
-    // Serial ports in windows start with "\\.\" so we add it if the name doesn't have it
-    if (name.substr(0, 4) != "\\\\.\\") {
-        name = "\\\\.\\" + name;
-    }
-
-    HANDLE serialPort = openSerialPort(name);
-    if (serialPort == INVALID_HANDLE_VALUE) {
+    int fd = openSerialPort(name);
+    if (fd < 0) {
         throw SerialPortError::InvalidHandleValue;
     }
 
     this->name = name;
-    this->serialPort = std::shared_ptr<void>(serialPort,
-        [](void* h) {
-            if (h && h != INVALID_HANDLE_VALUE) {
-                std::cout << "closing handle" << std::endl;
-                CloseHandle(h);
-            }
+    this->serialPort = std::shared_ptr<void>((void *)(intptr_t)fd, [](void* ptr) {
+        int fd = (intptr_t)ptr;
+        if (fd >= 0) {
+            std::cout << "closing fd" << std::endl;
+            close(fd);
         }
-    );
-    #endif
+    });
 }
 
 std::optional<SerialPortError> SerialPort::write(std::string message) const {
-    // Append `\n` character so that the Arduino knows it should read the message
-    if (message[message.length() - 1] != '\n') {
-        message += "\n";
+    if (message.back() != '\n') {
+        message += '\n';
     }
 
-    if (!WriteFile(this->serialPort.get(), message.c_str(), (DWORD)message.size(), nullptr, nullptr)) {
-        throw SerialPortError::WriteError;
+    int fd = (intptr_t)this->serialPort.get();
+    ssize_t written = ::write(fd, message.c_str(), message.size());
+    if (written < 0) {
+        return SerialPortError::WriteError;
     }
 
-    // clear input and output buffer
-    PurgeComm(this->serialPort.get(), 0b1100);
+    // Flush both input and output buffers
+    tcflush(fd, TCIOFLUSH);
     return std::nullopt;
 }
 
 std::optional<SerialPort> findArduinoSerialPort() {
-    #ifdef _WIN32
-    HDEVINFO ports = SetupDiGetClassDevsW(&GUID_DEVCLASS_PORTS, L"USB", nullptr, DIGCF_PRESENT);
-
-    SP_DEVINFO_DATA info;
-    info.cbSize = sizeof(SP_DEVINFO_DATA);
-
-    for (int i = 0; SetupDiEnumDeviceInfo(ports, i, &info); ++i) {
-        unsigned char deviceName[256];
-        SetupDiGetDeviceRegistryPropertyA(ports, &info, SPDRP_FRIENDLYNAME, nullptr, deviceName, sizeof(deviceName), nullptr);
-
-        HKEY hKey = SetupDiOpenDevRegKey(ports, &info, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
-        TCHAR portName[256];
-        DWORD portNameSize = sizeof(portName);
-        RegQueryValueExA(hKey, "PortName", NULL, NULL, (LPBYTE)portName, &portNameSize);
-        RegCloseKey(hKey);
-
-        if (deviceName != nullptr) {
-            if (std::string((char *)deviceName).substr(0, 7) == "Arduino") {
-                SetupDiDestroyDeviceInfoList(&info);
-                return SerialPort(std::string((char *)portName));
-            }
-        }
-    }
-
-    SetupDiDestroyDeviceInfoList(&info);
-
+    // This function would require scanning /dev/tty* and possibly reading udev properties or using libudev
+    // Placeholder for Linux implementation
     return std::nullopt;
-    #endif
 }
+
+#endif

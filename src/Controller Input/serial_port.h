@@ -6,6 +6,10 @@
 #include <windows.h>
 #endif
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
+
 enum SerialPortError {
     InvalidHandleValue,
     WriteError,
@@ -13,6 +17,8 @@ enum SerialPortError {
 
 #ifdef _WIN32
 HANDLE openSerialPort(std::string &serialPort);
+#else
+int openSerialPort(const std::string &serialPort);
 #endif
 
 /// Wrapper over os-dependent serial port
@@ -21,7 +27,7 @@ class SerialPort {
     std::shared_ptr<void> serialPort;
 
     public:
-    /// WINDOWS: Accepts port names such as `COM7` and `\\.\COM7`
+    /// Accepts port names such as `/dev/ttyUSB0` on Linux or `COM7` on Windows
     SerialPort(std::string name);
 
     /// Writes the given `message` to the serial port, appending a `\n` character at the end
