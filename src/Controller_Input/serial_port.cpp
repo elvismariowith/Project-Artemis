@@ -122,7 +122,20 @@ std::optional<SerialPortError> SerialPort::write(std::string message) const {
 std::optional<SerialPort> findArduinoSerialPort() {
     // This function would require scanning /dev/tty* and possibly reading udev properties or using libudev
     // Placeholder for Linux implementation
-    return std::nullopt;
+    SerialPort serialPort = [&]() -> SerialPort {
+    for (int i = 0; i < 10; ++i) {
+        std::string devPath = "/dev/ttyACM" + std::to_string(i);
+        try {
+            SerialPort sp(devPath);
+            std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
+            return sp;
+        } catch (...) {
+            return std::noptr;
+            // Fail silently, continue scanning
+        }
+    }
+    return std::move(serialPort);
+
 }
 
 SerialPort::SerialPort(SerialPort&& other) noexcept {

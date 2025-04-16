@@ -86,7 +86,9 @@ SDL_GameController* detectController() {
 
     return controller;
 }
-
+SerialPort loadPort(){
+    
+}
 int main() {
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
