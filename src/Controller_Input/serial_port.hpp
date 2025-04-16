@@ -4,25 +4,24 @@
 #include <optional>
 #include <string>
 #include <memory>
-
-#include <windows.h>
-
-#ifndef _WIN32
 #include <unistd.h>
-#endif
+
+
+//#ifndef _WIN32
+//#include <unistd.h>
+//#endif
 
 enum SerialPortError {
     InvalidHandleValue,
     WriteError,
 };
 
-HANDLE openSerialPort(std::string &serialPort);
-<<<<<<< HEAD:src/Controller Input/serial_port.h
-#else
+//HANDLE openSerialPort(std::string &serialPort);
+//#else
 int openSerialPort(const std::string &serialPort);
-#endif
-=======
->>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp
+
+//=======
+//>>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp
 
 /// Wrapper over os-dependent serial port
 class SerialPort {
@@ -43,9 +42,8 @@ class SerialPort {
         return this->name;
     }
 
-<<<<<<< HEAD:src/Controller Input/serial_port.h
-std::optional<SerialPort> findArduinoSerialPort();
-=======
+//<<<<<<< HEAD:src/Controller Input/serial_port.h
+//=======
     // Disable copying
     SerialPort(const SerialPort&) = delete;
     SerialPort& operator=(const SerialPort&) = delete;
@@ -58,4 +56,4 @@ SerialPort loadServo();
 std::optional<SerialPort> findArduinoSerialPort();
 
 #endif
->>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp
+//>>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp

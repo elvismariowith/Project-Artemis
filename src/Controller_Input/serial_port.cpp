@@ -2,7 +2,6 @@
 #include <iostream>
 #include "serial_port.hpp"
 
-#ifndef _WIN32
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
@@ -81,7 +80,7 @@ std::optional<SerialPortError> SerialPort::write(std::string message) const {
     return std::nullopt;
 }
 
-std::optional<SerialPort> findArduinoSerialPort() {
+/*std::optional<SerialPort> findArduinoSerialPort() {
     #ifdef _WIN32
     HDEVINFO ports = SetupDiGetClassDevsW(&GUID_DEVCLASS_PORTS, L"USB", nullptr, DIGCF_PRESENT);
 
@@ -117,7 +116,13 @@ std::optional<SerialPort> findArduinoSerialPort() {
     SetupDiDestroyDeviceInfoList(ports);
 
     return std::nullopt;
-    #endif
+
+} */
+
+std::optional<SerialPort> findArduinoSerialPort() {
+    // This function would require scanning /dev/tty* and possibly reading udev properties or using libudev
+    // Placeholder for Linux implementation
+    return std::nullopt;
 }
 
 SerialPort::SerialPort(SerialPort&& other) noexcept {
