@@ -26,7 +26,8 @@ using namespace cv::face;
 struct tm y2k = {0};
 const int NUM_PERSONS = 6;
 const std::string MODEL_PATH = "model.xml";
-
+const int PATROL_COMMAND = 9;
+const int SHOOT_COMMAND = 3;
 
 Mat preprocessImage(Mat image,Size imageSize){
     Mat gray_image, image_resized;
@@ -119,7 +120,7 @@ int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
     int seconds = difftime(current_time,last_time);
     if(seconds > 10){
         last_time = current_time;
-        arduino.write("1");
+        arduino.write(PATROL_COMMAND);
         return curr_pos + 1;
     };
     return curr_pos;
@@ -159,6 +160,7 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
             continue;
         }
         direction = getDirectionToMove(centerx,centery,faces[0]);
+        std::cout<<direction[0]<<" "<<direction[1]<<'\n';
         if(direction = {0,0}) return 1;
         if(direction[0] != Direction.None){
             arduinoPort.write(direction[0]);
@@ -170,6 +172,9 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     }
     return 0;
 }
+void shoot(SerialPort& arduinoPort){
+    arduinoPort.write(SHOOT_COMMAND);
+}
 void automatedMode(bool isModelSaved)
 {
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
@@ -180,7 +185,7 @@ void automatedMode(bool isModelSaved)
     CascadeClassifier eyeCascade;
     loadCascade(faceCascade,eyeCascade);
     Ptr<FisherFaceRecognizer> model = setupFisherFacesModel(imageSize,isModelSaved,faceCascade,eyeCascade);
-    //SerialPort arduinoPort = loadServo();
+    SerialPort arduinoPort = loadServo();
 
     int framesDetected = 0;
     int currentLabel = 0;
@@ -221,7 +226,10 @@ void automatedMode(bool isModelSaved)
         if(predicted_label != -1) framesDetectedPerPerson[predicted_label-1]++;
         if(*max_element(framesDetectedPerPerson.begin(),framesDetectedPerPerson.end()) > DETECTION_THRESHOLD){
             std::cout<<"Person detected from the team\n";
-            centerFace();
+            int couldCenter = centerFace(imageSize,faceCascade,eyeCascade,arduinoPort);
+            if(couldCenter){
+                shoot();
+            }
         }
         else{
             time_t current_time;
