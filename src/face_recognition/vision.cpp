@@ -63,7 +63,7 @@ std::vector<Rect> detectFaces(Mat& frame,CascadeClassifier& faceCascade,CascadeC
     }
     equalizeHist(frameGray,frameGray);
     faceCascade.detectMultiScale(frameGray,faces,1.1,2,0,detectionScaleSize);
-    
+
     return faces;
 }
 void displayFaces(std::vector<Rect>& faces,Mat& frame){
@@ -98,7 +98,9 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
         std::getline(liness, classlabel);
         if (!path.empty() && !classlabel.empty())
         {
+            std::cout<<FACES_PATH + path<<std::endl;
             Mat image = imread(FACES_PATH + path, 0);
+            std::cout<<image.rows<<std::endl;
             Mat image_resized;
             resize(image, image_resized, image_size);
             images.push_back(image_resized);
@@ -120,24 +122,24 @@ int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
     int seconds = difftime(current_time,last_time);
     if(seconds > 10){
         last_time = current_time;
-        arduino.write(PATROL_COMMAND);
+        arduino.write(std::to_string(PATROL_COMMAND));
         return curr_pos + 1;
     };
     return curr_pos;
 }
-pair<int,int> DirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
-    pair<int,int> direction = {0,0};
+std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
+    std::pair<int,int> direction = {0,0};
     if(rectangleFace.x < pointx){
-        direction[0] = Direction.RIGHT;
+        direction.first = 1;
     }
     else if(rectangleFace.x + rectangleFace.width > pointx){
-        direction[0] = Direction.LEFT;
+        direction.first = -1;
     }
     if(rectangleFace.y < pointy){
-        direction[0] = Direction.UP;
+        direction.second = 2;
     }
     else if(rectangleFace.y + rectangleFace.height > pointx){
-        direction[0] = Direction.DOWN;
+        direction.second = -2;
     }
     return direction;
 }
@@ -146,34 +148,34 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
 
     Mat image = getImage(imageSize);
     Size detectionSize = Size(30,30);
-    vector<Rect> faces;
-    int centerx = image.rows() / 2;
-    int centery = image.cols() / 2;
-    pair<int,int> direction;
-    while(frameItCanFail  > 0){
-        
+    std::vector<Rect> faces;
+    int centerx = image.rows / 2;
+    int centery = image.cols / 2;
+    std::pair<int,int> direction;
+    while(framesItCanFail  > 0){
+
         image = getImage(imageSize);
-        faces = detectFaces(image,faceCascade,eyeCascade,detectionSize);
+        faces = detectFaces(image,faceCascade,eyesCascade,detectionSize);
 
         if(faces.size() == 0){
             framesItCanFail--;
             continue;
         }
         direction = getDirectionToMove(centerx,centery,faces[0]);
-        std::cout<<direction[0]<<" "<<direction[1]<<'\n';
-        if(direction = {0,0}) return 1;
-        if(direction[0] != Direction.None){
-            arduinoPort.write(direction[0]);
+        std::cout<<direction.first<<" "<<direction.second<<'\n';
+        if(direction == std::make_pair(0,0)) return 1;
+        if(direction.first != 0){
+            arduinoPort.write(std::to_string(direction.first));
         }
-        if(direction[1] != Direction.None){
-            arduinoPort.write(direction[1]);
+        if(direction.second != 0){
+            arduinoPort.write(std::to_string(direction.second));
         }
-        
+
     }
     return 0;
 }
 void shoot(SerialPort& arduinoPort){
-    arduinoPort.write(SHOOT_COMMAND);
+    arduinoPort.write(std::to_string(SHOOT_COMMAND));
 }
 void automatedMode(bool isModelSaved)
 {
@@ -185,7 +187,8 @@ void automatedMode(bool isModelSaved)
     CascadeClassifier eyeCascade;
     loadCascade(faceCascade,eyeCascade);
     Ptr<FisherFaceRecognizer> model = setupFisherFacesModel(imageSize,isModelSaved,faceCascade,eyeCascade);
-    SerialPort arduinoPort = loadServo();
+
+    SerialPort arduinoPort = findArduinoSerialPort();
 
     int framesDetected = 0;
     int currentLabel = 0;
@@ -206,7 +209,7 @@ void automatedMode(bool isModelSaved)
         std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
         if (faces.empty()) continue; // No face detected, skip this frame
 
-        
+
         //displayFaces(faces,image);
         cv::Size inflationSize(50,50);
         faces[0] += inflationSize;
@@ -215,20 +218,20 @@ void automatedMode(bool isModelSaved)
         Mat faceROI = image(faces[0] & imageRect); // take first detected face
         imshow("test",faceROI);
         faceROI = preprocessImage(image,imageSize); // match training size
-        
 
-        
+
+
         int predicted_label = -1;
         double confidence = 0.0;
         model->predict(faceROI, predicted_label, confidence);
         std::cout << predicted_label << " " << confidence <<" "<<framesDetected<<std::endl;
-        
+
         if(predicted_label != -1) framesDetectedPerPerson[predicted_label-1]++;
         if(*max_element(framesDetectedPerPerson.begin(),framesDetectedPerPerson.end()) > DETECTION_THRESHOLD){
             std::cout<<"Person detected from the team\n";
             int couldCenter = centerFace(imageSize,faceCascade,eyeCascade,arduinoPort);
             if(couldCenter){
-                shoot();
+//                shoot();
             }
         }
         else{
@@ -239,7 +242,7 @@ void automatedMode(bool isModelSaved)
                 last_time = 0;
             }
         }
-        
+
     }
 
 }
