@@ -10,7 +10,6 @@
 #include <string>
 
 
-
 namespace client
 {
     std::string getImage();
