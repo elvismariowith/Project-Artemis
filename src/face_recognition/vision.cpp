@@ -153,10 +153,13 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
         
         image = getImage(imageSize);
         faces = detectFaces(image,faceCascade,eyeCascade,detectionSize);
+
         if(faces.size() == 0){
             framesItCanFail--;
             continue;
         }
+        direction = getDirectionToMove(centerx,centery,faces[0]);
+        if(direction = {0,0}) return 1;
         if(direction[0] != Direction.None){
             arduinoPort.write(direction[0]);
         }
@@ -165,7 +168,7 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
         }
         
     }
-    return 1;
+    return 0;
 }
 void automatedMode(bool isModelSaved)
 {
