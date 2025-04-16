@@ -24,8 +24,8 @@ SDL_TimerID axisTimerIDy = 0;
 SDL_TimerID axisTimerTrigger = 0;
 
 int currentInputX = 0; // -1 for left, 1 for right, 0 for neutral
-int currentInputY = 0;
-int currentInputTrigger = -3; // -3 for no trigger pressed
+int currentInputY = 0; // -2 for down, 2 for up, 0 
+int currentInputTrigger = 0; // -3 for no trigger pressed
 
 Uint32 AxisTimerCallbackX(Uint32 interval, void* param) {
     SDL_Event event;
@@ -206,33 +206,30 @@ int main() {
         else if (event.type == SDL_CONTROLLERAXISMOTION) {
             if (event.cbutton.button == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
                 int value = event.caxis.value;
-                
-                if (value > 8000){
+                std::cout <<"Right trigger pressed. Current value before any check: (" << value << ")\n";
+                if (value > 0){
                 if (currentInputTrigger != 3){
-                    std::cout <<"Right trigger pressed (value: )" << value << ")\n";
                     currentInputTrigger = 3;
-                    if (axisTimerTrigger != 0){
-                        SDL_RemoveTimer(axisTimerTrigger);
-                        axisTimerTrigger = 0;
-                    } 
+                    if (axisTimerTrigger != 0) SDL_RemoveTimer(axisTimerTrigger);
                     axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
+                    std::cout <<"Right trigger pressed. Started timer ID: " << axisTimerTrigger << ")\n";
                 }
-                else if (value < 8000){
+            } else {
+                    std::cout <<"Right trigger released. Started timer ID: " << axisTimerTrigger << ")\n";
                     if (currentInputTrigger != -3){
-                    std::cout <<"Right trigger released (value: )" << value << ")\n";
                     currentInputTrigger = -3;
                     if (axisTimerTrigger != 0) {
                         SDL_RemoveTimer(axisTimerTrigger);
                         axisTimerTrigger = 0;
+                        arduinoCommunication(arduino_serial, currentInputTrigger);
                     }
-                    axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
+                    // axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
                 }
                 //std::cout << "Shooting...\n" << std::endl;
             }
-            }
-            }
-        } 
+        }
     }
+}
     SDL_Delay(1); // prevent tight loop
 }
 

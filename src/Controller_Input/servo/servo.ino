@@ -5,13 +5,15 @@ Servo myservoY;
 Servo servoTrigger;
 int default_position = 90;
 int default_positionY = 90;
-int default_trigger_position = 90;
+int default_trigger_position = 50;
+int max_trigger_position = 85;
 int currentposition = default_position;
 int currentpositionY = default_positionY;
 int currentTriggerPosition = default_trigger_position;
 
 void setup() {
-  Serial.begin(9600); // communication with PS4
+  Serial.end();
+  Serial.begin(4800); // communication with PS4
   myservo.attach(10);
   myservo.write(default_position);
 
@@ -61,7 +63,7 @@ void loop() {
     }
 
   if (angle == 3){
-    servoTrigger.write(180);
+    servoTrigger.write(max_trigger_position);
   }
   if (angle == -3){
     servoTrigger.write(default_trigger_position);
