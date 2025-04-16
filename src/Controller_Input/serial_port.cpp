@@ -23,8 +23,8 @@ int openSerialPort(const std::string &serialPort) {
         return -1;
     }
 
-    cfsetospeed(&tty, B9600);
-    cfsetispeed(&tty, B9600);
+    cfsetospeed(&tty, B4800);
+    cfsetispeed(&tty, B4800);
 
     tty.c_cflag = (tty.c_cflag & ~CSIZE) | CS8;     // 8-bit chars
     tty.c_iflag &= ~IGNBRK;                         // disable break processing
@@ -119,22 +119,16 @@ std::optional<SerialPortError> SerialPort::write(std::string message) const {
 
 } */
 
-std::optional<SerialPort> findArduinoSerialPort() {
+SerialPort findArduinoSerialPort() {
     // This function would require scanning /dev/tty* and possibly reading udev properties or using libudev
     // Placeholder for Linux implementation
-    SerialPort serialPort = [&]() -> SerialPort {
+ 
     for (int i = 0; i < 10; ++i) {
         std::string devPath = "/dev/ttyACM" + std::to_string(i);
-        try {
-            SerialPort sp(devPath);
-            std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
-            return sp;
-        } catch (...) {
-            return std::noptr;
-            // Fail silently, continue scanning
-        }
+        SerialPort sp(devPath);
+        std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
+        return std::move(sp);        
     }
-    return std::move(serialPort);
 
 }
 

@@ -32,10 +32,9 @@ target_link_libraries(client ${Boost_LIBRARIES})
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
 
-add_library(control  src/Controller_Input/serial_port.cpp src/Controller_Input/controller_windows.cpp src/Controller_Input/environment_manager.cpp)
+add_library(control  src/Controller_Input/serial_port.cpp src/Controller_Input/controller_linux.cpp src/Controller_Input/environment_manager.cpp)
 include_directories(src/Controller_Input)
 target_link_libraries(control ${SDL2_LIBRARIES})
-target_link_libraries(control SetupAPI)
 
 set(vision_DIR "src/face_recognition")
 include_directories(${vision_DIR})

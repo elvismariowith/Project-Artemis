@@ -98,7 +98,7 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
         std::getline(liness, classlabel);
         if (!path.empty() && !classlabel.empty())
         {
-            std::cout<<FACES_PATH + path<<std::endl;
+ 	    std::cout<<FACES_PATH + path<<std::endl;
             Mat image = imread(FACES_PATH + path, 0);
             std::cout<<image.rows<<std::endl;
             Mat image_resized;
@@ -153,7 +153,6 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     int centery = image.cols / 2;
     std::pair<int,int> direction;
     while(framesItCanFail  > 0){
-
         image = getImage(imageSize);
         faces = detectFaces(image,faceCascade,eyesCascade,detectionSize);
 
@@ -187,7 +186,6 @@ void automatedMode(bool isModelSaved)
     CascadeClassifier eyeCascade;
     loadCascade(faceCascade,eyeCascade);
     Ptr<FisherFaceRecognizer> model = setupFisherFacesModel(imageSize,isModelSaved,faceCascade,eyeCascade);
-
     SerialPort arduinoPort = findArduinoSerialPort();
 
     int framesDetected = 0;

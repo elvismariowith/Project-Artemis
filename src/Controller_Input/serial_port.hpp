@@ -53,7 +53,7 @@ class SerialPort {
     SerialPort& operator=(SerialPort&& other) noexcept;
 };
 SerialPort loadServo();
-std::optional<SerialPort> findArduinoSerialPort();
+SerialPort findArduinoSerialPort();
 
 #endif
 //>>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp
