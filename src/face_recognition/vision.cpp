@@ -124,8 +124,48 @@ int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
     };
     return curr_pos;
 }
-int centerFace(){
-    return -1;
+pair<int,int> DirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
+    pair<int,int> direction = {0,0};
+    if(rectangleFace.x < pointx){
+        direction[0] = Direction.RIGHT;
+    }
+    else if(rectangleFace.x + rectangleFace.width > pointx){
+        direction[0] = Direction.LEFT;
+    }
+    if(rectangleFace.y < pointy){
+        direction[0] = Direction.UP;
+    }
+    else if(rectangleFace.y + rectangleFace.height > pointx){
+        direction[0] = Direction.DOWN;
+    }
+    return direction;
+}
+int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier& eyesCascade,SerialPort& arduinoPort){
+    int framesItCanFail = 100;
+
+    Mat image = getImage(imageSize);
+    Size detectionSize = Size(30,30);
+    vector<Rect> faces;
+    int centerx = image.rows() / 2;
+    int centery = image.cols() / 2;
+    pair<int,int> direction;
+    while(frameItCanFail  > 0){
+        
+        image = getImage(imageSize);
+        faces = detectFaces(image,faceCascade,eyeCascade,detectionSize);
+        if(faces.size() == 0){
+            framesItCanFail--;
+            continue;
+        }
+        if(direction[0] != Direction.None){
+            arduinoPort.write(direction[0]);
+        }
+        if(direction[1] != Direction.None){
+            arduinoPort.write(direction[1]);
+        }
+        
+    }
+    return 1;
 }
 void automatedMode(bool isModelSaved)
 {
@@ -178,6 +218,7 @@ void automatedMode(bool isModelSaved)
         if(predicted_label != -1) framesDetectedPerPerson[predicted_label-1]++;
         if(*max_element(framesDetectedPerPerson.begin(),framesDetectedPerPerson.end()) > DETECTION_THRESHOLD){
             std::cout<<"Person detected from the team\n";
+            centerFace();
         }
         else{
             time_t current_time;
