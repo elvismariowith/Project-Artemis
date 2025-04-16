@@ -12,45 +12,58 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-
 #include "environment_manager.h"
 #include "serial_port.h"
 
-// debugging
-//#define SERIAL_PORT "/dev/ttyACM0"
+// Direction enum
+// 1's for horizontal
+// 2's for vertical
+// 3's for trigger
+enum Direction {
+    NONE = 0,
+    LEFT = 1,
+    RIGHT = -1,
+    UP = 2,
+    DOWN = -2
+};
 
-SDL_TimerID axisTimerIDx = 0;
-SDL_TimerID axisTimerIDy = 0;
+// Timer context struct
+struct TimerContext {
+    Direction dir;
+};
 
-int currentInputX = 0; // -1 for left, 1 for right, 0 for neutral
-int currentInputY = 0;
+// Timer contexts
+TimerContext leftCtx = { LEFT };
+TimerContext rightCtx = { RIGHT };
+TimerContext upCtx = { UP };
+TimerContext downCtx = { DOWN };
 
-Uint32 AxisTimerCallbackX(Uint32 interval, void* param) {
+// Timer IDs and current state
+SDL_TimerID axisTimerID = 0;
+SDL_TimerID yAxisTimerID = 0;
+
+int currentDirectionX = NONE;
+int currentDirectionY = NONE;
+
+// Timer callback function
+Uint32 AxisTimerCallback(Uint32 interval, void* param) {
+    TimerContext* ctx = static_cast<TimerContext*>(param);
+    
     SDL_Event event;
     SDL_zero(event);
     event.type = SDL_USEREVENT;
-    event.user.code = currentInputX;
+    event.user.code = ctx->dir;  // Send -2, -1, 0, 1, or 2
     SDL_PushEvent(&event);
-
 
     return interval;
 }
 
-Uint32 AxisTimerCallbackY(Uint32 interval, void* param) {
-    SDL_Event event;
-    SDL_zero(event);
-    event.type = SDL_USEREVENT;
-    event.user.code = currentInputY;
-    SDL_PushEvent(&event);
-
-
-    return interval;
-}
-
-void arduinoCommunication(std::ofstream &arduino_serial, int command){
+// Send command to Arduino
+void arduinoCommunication(std::ofstream &arduino_serial, int command) {
     arduino_serial << command << std::endl;
 }
 
+// Detect controller
 SDL_GameController* detectController() {
     int numJoysticks = SDL_NumJoysticks();
     std::cout << "Number of connected controllers: " << numJoysticks << std::endl;
@@ -86,142 +99,117 @@ int main() {
         return -1;
     }
 
-
     SerialPort serialPort = [&]() -> SerialPort {
-    for (int i = 0; i < 10; ++i) {
-        std::string devPath = "/dev/ttyACM" + std::to_string(i);
-        try {
-            SerialPort sp(devPath);
-            std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
-            return sp;
-        } catch (...) {
-            // Fail silently, continue scanning
+        for (int i = 0; i < 10; ++i) {
+            std::string devPath = "/dev/ttyACM" + std::to_string(i);
+            try {
+                SerialPort sp(devPath);
+                std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
+                return sp;
+            } catch (...) {
+                // Fail silently
+            }
         }
-    }
 
-    std::cerr << "Failed to detect Arduino on any /dev/ttyACM* port." << std::endl;
-    exit(-1);
+        std::cerr << "Failed to detect Arduino on any /dev/ttyACM* port." << std::endl;
+        exit(-1);
     }();
 
-    // maybe this isn't sending with the correct baud rate?
-    std::ofstream arduino_serial(serialPort.getName()); // gets the file stream
-        if(!arduino_serial.is_open()){
-            std::cerr << "Failed to open arduino serial port." << std::endl;
-        } 
+    std::ofstream arduino_serial(serialPort.getName());
+    if (!arduino_serial.is_open()) {
+        std::cerr << "Failed to open arduino serial port." << std::endl;
+    }
 
     bool running = true;
     SDL_Event event;
 
-
     while (running) {
-       
-
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
             }
 
-        else if (event.type == SDL_USEREVENT) {
-            int command = event.user.code;
-            arduinoCommunication(arduino_serial, command);
-
-        }
-        
-        // Horizontal movement
-        else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
-            int value = event.caxis.value;
-
-            if (value < -8000) {
-                if (currentInputX != 1) { // if new input detected..
-                    currentInputX = 1; // send data to move left
-                    if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx); // stop existing timers from other previous inputs 
-                    axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr); // start event!
-                     std::cout << "Moving left. Started timer ID: " << axisTimerIDx << std::endl;
-                }
+            // Event sent from timer callback
+            else if (event.type == SDL_USEREVENT) {
+                int command = event.user.code;
+                arduinoCommunication(arduino_serial, command);
+                std::cout << "Sent to Arduino: " << command << std::endl;
             }
 
+            // Left stick X-axis (left/right)
+            else if (event.type == SDL_CONTROLLERAXISMOTION &&
+                     event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
 
-            else if (value > 8000) {
-                if (currentInputX != -1) {
-                    currentInputX = -1;
-                    if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx);
-                    axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr);
-                     std::cout << "Moving right. Started timer ID: " << axisTimerIDx << std::endl;
-                }
-            }
-
-            else {
-                if (currentInputX != 0) {
-                    currentInputX = 0;
-                    if (axisTimerIDx != 0) {
-                        SDL_RemoveTimer(axisTimerIDx);
-                        std::cout << "Stopped timer ID: " << axisTimerIDx << std::endl;
-                        axisTimerIDx = 0;
-                    }
-                }
-            }
-        }
-
-        // Vertical movement
-        else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY){
-            int value = event.caxis.value;
-
-            if (value < -8000){
-                if (currentInputY != 2) {
-                    currentInputY = 2;
-                    if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
-                    std::cout << "Moving up. Started timer ID: " << axisTimerIDy << std::endl;
-                }
-            } else if (value > 8000) {
-                if (currentInputY != -2) {
-                    currentInputY = -2;
-                    if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
-                    std::cout << "Moving down. Started timer ID: " << axisTimerIDy << std::endl;
-                }
-            } else { // Axis in neutral position.
-                currentInputY = 0;
-                if (axisTimerIDy != 0) {
-                    SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = 0;
-                }
-            }
-        } 
-    
-        // Trigger input
-        /*else if (event.type == SDL_CONTROLLERAXISMOTION) {
-            if (event.cbutton.button == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
                 int value = event.caxis.value;
-                
-                if (value > 8000){
-                if (currentInput != 3){
-                    std::cout <<"Right trigger pressed (value: )" << value << ")\n";
-                    currentInput = 3;
-                    if (axisTimerIDy != 0){
-                        SDL_RemoveTimer(axisTimerIDy);
-                    } 
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallback, nullptr);
-                }
-                else if (value < 8000){
-                    if (currentInput != -3){
-                    currentInput = -3;
-                    if (axisTimerIDy != 0) {
-                        SDL_RemoveTimer(axisTimerIDy);
-                        axisTimerIDy = 0;
-                    }
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallback, nullptr);
-                }
-                //std::cout << "Shooting...\n" << std::endl;
-            }
-            }
-            }
-        } */
-    }
-    SDL_Delay(1); // prevent tight loop
-}
+                Direction newDirectionX = NONE;
 
-    if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
+                if (value < -8000) newDirectionX = LEFT;
+                else if (value > 8000) newDirectionX = RIGHT;
+
+                if (newDirectionX != currentDirectionX) {
+                    currentDirectionX = newDirectionX;
+
+                    if (axisTimerID != 0) {
+                        SDL_RemoveTimer(axisTimerID);
+                        std::cout << "Stopped X-axis timer ID: " << axisTimerID << std::endl;
+                        axisTimerID = 0;
+                    }
+
+                    if (currentDirectionX != NONE) {
+                        TimerContext* ctx = (currentDirectionX == LEFT) ? &leftCtx : &rightCtx;
+                        axisTimerID = SDL_AddTimer(50, AxisTimerCallback, ctx);
+                        std::cout << "Started X-axis timer for direction: " << currentDirectionX
+                                  << " | Timer ID: " << axisTimerID << std::endl;
+                    } else {
+                        std::cout << "X-axis stick returned to neutral.\n";
+                    }
+                }
+            }
+
+            // Left stick Y-axis (up/down)
+            else if (event.type == SDL_CONTROLLERAXISMOTION &&
+                     event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY) {
+
+                int value = event.caxis.value;
+                Direction newDirectionY = NONE;
+
+                if (value < -8000) newDirectionY = UP;
+                else if (value > 8000) newDirectionY = DOWN;
+
+                if (newDirectionY != currentDirectionY) {
+                    currentDirectionY = newDirectionY;
+
+                    if (yAxisTimerID != 0) {
+                        SDL_RemoveTimer(yAxisTimerID);
+                        std::cout << "Stopped Y-axis timer ID: " << yAxisTimerID << std::endl;
+                        yAxisTimerID = 0;
+                    }
+
+                    if (currentDirectionY != NONE) {
+                        TimerContext* ctx = (currentDirectionY == UP) ? &upCtx : &downCtx;
+                        yAxisTimerID = SDL_AddTimer(50, AxisTimerCallback, ctx);
+                        std::cout << "Started Y-axis timer for direction: " << currentDirectionY
+                                  << " | Timer ID: " << yAxisTimerID << std::endl;
+                    } else {
+                        std::cout << "Y-axis stick returned to neutral.\n";
+                    }
+                }
+            }
+
+            // Button press debug
+            else if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+                if (event.cbutton.button == SDL_CONTROLLER_BUTTON_X) {
+                    std::cout << "X button pressed!\n";
+                }
+            }
+        }
+
+        SDL_Delay(1);
+    }
+
+    // Cleanup
+    if (axisTimerID != 0) SDL_RemoveTimer(axisTimerID);
+    if (yAxisTimerID != 0) SDL_RemoveTimer(yAxisTimerID);
     SDL_GameControllerClose(controller);
     SDL_Quit();
     return 0;
