@@ -4,7 +4,7 @@ import speech_recognition as sr
 r = sr.Recognizer()
 
 #list of key words
-keyWords = ["shoot", "snapshot", "left", "right", "up", "down"]
+keyWords = ["fire","shoot", "left", "right", "up", "down"]
 
 # Reading Microphone as source
 # listening the speech and store in audio_text variable
@@ -24,7 +24,19 @@ with sr.Microphone() as source:
         currentWord = speechText.split()
         for i in currentWord: 
             if i in keyWords:
-                print(i)
+                if i == "left":
+                    print(int(-1))
+                elif i == "right":
+                    print(int(1))
+                elif i == "up":
+                    print(int(2))
+                elif i == "down":
+                    print(int(-2))
+                elif i == "shoot" or "fire":
+                    print(int(3))
+                else:
+                    print(int(0))
+                
     except Exception as e:
          print(e)
          print("Sorry, I did not get that")
