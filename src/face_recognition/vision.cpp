@@ -183,7 +183,7 @@ void shoot(SerialPort& arduinoPort){
     arduinoPort.write(SHOOT_COMMAND);
     arduinoPort.write(STOP_SHOOT_COMMAND);
 }
-void automatedMode(bool isModelSaved,SerialPort& arduinoPort)
+void automatedMode(bool isModelSaved)
 {
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
     Size imageSize(350, 350);
@@ -193,6 +193,7 @@ void automatedMode(bool isModelSaved,SerialPort& arduinoPort)
     CascadeClassifier eyeCascade;
     loadCascade(faceCascade,eyeCascade);
     Ptr<FisherFaceRecognizer> model = setupFisherFacesModel(imageSize,isModelSaved,faceCascade,eyeCascade);
+    SerialPort arduinoPort = findArduinoSerialPort();
 
     int framesDetected = 0;
     int currentLabel = 0;

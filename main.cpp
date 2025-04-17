@@ -14,7 +14,7 @@ int main(int argc, char** argv){
     bool modelSaved = (std::string(argv[1]) == "1");
     SerialPort arduinoPort = findArduinoSerialPort();
     std::thread manual_thread(manualMode);
-    std::thread automated_thread(automatedMode, modelSaved,arduinoPort);
+    std::thread automated_thread(automatedMode, modelSaved);
 
     //manual_thread.detach();
     automated_thread.join();

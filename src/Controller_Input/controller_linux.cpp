@@ -14,7 +14,6 @@
 
 
 #include "environment_manager.h"
-#include "serial_port.hpp"
 #include "controller_linux.hpp"
 
 // debugging
@@ -90,7 +89,7 @@ SDL_GameController* detectController() {
 SerialPort loadPort(){
     
 }
-int manualMode(SerialPort& Arduino& serialPort) {
+int manualMode() {
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return -1;
@@ -103,9 +102,21 @@ int manualMode(SerialPort& Arduino& serialPort) {
     }
 
 
+    SerialPort serialPort = [&]() -> SerialPort {
+    for (int i = 0; i < 10; ++i) {
+        std::string devPath = "/dev/ttyACM" + std::to_string(i);
+        try {
+            SerialPort sp(devPath);
+            std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
+            return sp;
+        } catch (...) {
+            // Fail silently, continue scanning
+        }
+    }
 
     std::cerr << "Failed to detect Arduino on any /dev/ttyACM* port." << std::endl;
     exit(-1);
+    }();
 
     // maybe this isn't sending with the correct baud rate?
     std::ofstream arduino_serial(serialPort.getName()); // gets the file stream
