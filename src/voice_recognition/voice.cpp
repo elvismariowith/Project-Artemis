@@ -1,42 +1,30 @@
 #include <iostream>
-#include <cstdlib>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <fstream>
-#include "json.hpp"// Include nlohmann/json.hpp or install via package manager
+#include <cstdio>
+#include <memory>
+#include <array>
+#include <stdio.h>
+#include <cstdio> // for popen and pclose
 
+#ifdef _WIN32
+    #define popen _popen
+    #define pclose _pclose
+#endif
 
-using json = nlohmann::json;
 
 int main() {
-    std::string command = "python speech_recognizer.py";
-    int status = system(command.c_str());
+    std::array<char, 128> buffer;
+    std::string result;
 
-    if (status != 0) {
-        std::cerr << "Failed to run Python script." << std::endl;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("python speech_recognizer.py", "r"), pclose);
+    if (!pipe) {
+        std::cerr << "Failed to run Python script\n";
         return 1;
     }
 
-    std::ifstream inputFile("speech_output.json");
-    if (!inputFile) {
-        std::cerr << "Failed to open output file." << std::endl;
-        return 1;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
     }
 
-    json output;
-    inputFile >> output;
-
-    if (output.contains("error")) {
-        std::cerr << "Speech recognition error: " << output["error"] << std::endl;
-        return 1;
-    }
-
-    std::cout << "You said: " << output["text"] << std::endl;
-    std::cout << "Detected keywords:" << std::endl;
-    for (const auto& word : output["keywords"]) {
-        std::cout << word << std::endl;
-    }
-
+    std::cout << "Python Output:\n" << result;
     return 0;
 }
