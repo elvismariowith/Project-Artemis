@@ -49,7 +49,7 @@ int openSerialPort(const std::string &serialPort) {
     return fd;
 }
 
-SerialPort::SerialPort(std::string name) {
+SerialPort::SerialPort(std::string name): arduino_serial(name) {
     int fd = openSerialPort(name);
     if (fd < 0) {
         throw SerialPortError::InvalidHandleValue;
@@ -65,11 +65,9 @@ SerialPort::SerialPort(std::string name) {
     });
 }
 
-std::optional<SerialPortError> SerialPort::write(int command) const {
+std::optional<SerialPortError> SerialPort::write(int command)  {
     
-
-    std::ofstream arduinoSerial(this->getName());
-    arduinoSerial << command;
+    arduino_serial << command << std::endl;
     return std::nullopt;
 }
 

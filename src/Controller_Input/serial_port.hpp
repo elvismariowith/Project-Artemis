@@ -27,7 +27,7 @@ int openSerialPort(const std::string &serialPort);
 class SerialPort {
     std::string name;
     std::shared_ptr<void> serialPort;
-
+    std::ofstream arduino_serial;
     public:
     /// Accepts port names such as `/dev/ttyUSB0` on Linux or `COM7` on Windows
     SerialPort(std::string name);
@@ -35,7 +35,7 @@ class SerialPort {
     /// Writes the given `message` to the serial port, appending a `\n` character at the end
     /// to signal the end of the message being written.
     /// Throws `SerialPortError::WriteError` in the case of an error.
-    std::optional<SerialPortError> write(int command) const;
+    std::optional<SerialPortError> write(int command);
 
     /// Returns the name of the serial port
     const std::string& getName() const noexcept {

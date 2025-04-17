@@ -14,7 +14,7 @@
 
 
 #include "environment_manager.h"
-#include "serial_port.hpp"
+#include "controller_linux.hpp"
 
 // debugging
 //#define SERIAL_PORT "/dev/ttyACM0"
@@ -89,7 +89,7 @@ SDL_GameController* detectController() {
 SerialPort loadPort(){
     
 }
-int main() {
+int manualMode() {
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
         return -1;
@@ -136,99 +136,99 @@ int main() {
                 running = false;
             }
 
-        else if (event.type == SDL_USEREVENT) {
-            int command = event.user.code;
-            arduinoCommunication(arduino_serial, command);
+            else if (event.type == SDL_USEREVENT) {
+                int command = event.user.code;
+                arduinoCommunication(arduino_serial, command);
 
-        }
-        
-        // Horizontal movement
-        else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
-            int value = event.caxis.value;
-
-            if (value < -8000) {
-                if (currentInputX != 1) { // if new input detected..
-                    currentInputX = 1; // send data to move left
-                    if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx); // stop existing timers from other previous inputs 
-                    axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr); // start event!
-                     std::cout << "Moving left. Started timer ID: " << axisTimerIDx << std::endl;
-                }
             }
-
-
-            else if (value > 8000) {
-                if (currentInputX != -1) {
-                    currentInputX = -1;
-                    if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx);
-                    axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr);
-                     std::cout << "Moving right. Started timer ID: " << axisTimerIDx << std::endl;
-                }
-            }
-
-            else {
-                if (currentInputX != 0) {
-                    currentInputX = 0;
-                    if (axisTimerIDx != 0) {
-                        SDL_RemoveTimer(axisTimerIDx);
-                        std::cout << "Stopped timer ID: " << axisTimerIDx << std::endl;
-                        axisTimerIDx = 0;
-                    }
-                }
-            }
-        }
-
-        // Vertical movement
-        else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY){
-            int value = event.caxis.value;
-
-            if (value < -8000){
-                if (currentInputY != 2) {
-                    currentInputY = 2;
-                    if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
-                    std::cout << "Moving up. Started timer ID: " << axisTimerIDy << std::endl;
-                }
-            } else if (value > 8000) {
-                if (currentInputY != -2) {
-                    currentInputY = -2;
-                    if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
-                    std::cout << "Moving down. Started timer ID: " << axisTimerIDy << std::endl;
-                }
-            } else { // Axis in neutral position.
-                currentInputY = 0;
-                if (axisTimerIDy != 0) {
-                    SDL_RemoveTimer(axisTimerIDy);
-                    axisTimerIDy = 0;
-                }
-            }
-        } 
-    
-        // Trigger input
-        else if (event.type == SDL_CONTROLLERAXISMOTION) {
-            if (event.cbutton.button == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
+            
+            // Horizontal movement
+            else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
                 int value = event.caxis.value;
-                std::cout <<"Right trigger pressed. Current value before any check: (" << value << ")\n";
-                if (value > 0){
-                if (currentInputTrigger != 3){
-                    currentInputTrigger = 3;
-                    if (axisTimerTrigger != 0) SDL_RemoveTimer(axisTimerTrigger);
-                    axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
-                    std::cout <<"Right trigger pressed. Started timer ID: " << axisTimerTrigger << ")\n";
-                }
-            } else {
-                    std::cout <<"Right trigger released. Started timer ID: " << axisTimerTrigger << ")\n";
-                    if (currentInputTrigger != -3){
-                    currentInputTrigger = -3;
-                    if (axisTimerTrigger != 0) {
-                        SDL_RemoveTimer(axisTimerTrigger);
-                        axisTimerTrigger = 0;
-                        arduinoCommunication(arduino_serial, currentInputTrigger);
+
+                if (value < -8000) {
+                    if (currentInputX != 1) { // if new input detected..
+                        currentInputX = 1; // send data to move left
+                        if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx); // stop existing timers from other previous inputs 
+                        axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr); // start event!
+                        std::cout << "Moving left. Started timer ID: " << axisTimerIDx << std::endl;
                     }
-                    // axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
                 }
-                //std::cout << "Shooting...\n" << std::endl;
+
+
+                else if (value > 8000) {
+                    if (currentInputX != -1) {
+                        currentInputX = -1;
+                        if (axisTimerIDx != 0) SDL_RemoveTimer(axisTimerIDx);
+                        axisTimerIDx = SDL_AddTimer(50, AxisTimerCallbackX, nullptr);
+                        std::cout << "Moving right. Started timer ID: " << axisTimerIDx << std::endl;
+                    }
+                }
+
+                else {
+                    if (currentInputX != 0) {
+                        currentInputX = 0;
+                        if (axisTimerIDx != 0) {
+                            SDL_RemoveTimer(axisTimerIDx);
+                            std::cout << "Stopped timer ID: " << axisTimerIDx << std::endl;
+                            axisTimerIDx = 0;
+                        }
+                    }
+                }
             }
+
+            // Vertical movement
+            else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTY){
+                int value = event.caxis.value;
+
+                if (value < -8000){
+                    if (currentInputY != 2) {
+                        currentInputY = 2;
+                        if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
+                        axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
+                        std::cout << "Moving up. Started timer ID: " << axisTimerIDy << std::endl;
+                    }
+                } else if (value > 8000) {
+                    if (currentInputY != -2) {
+                        currentInputY = -2;
+                        if (axisTimerIDy != 0) SDL_RemoveTimer(axisTimerIDy);
+                        axisTimerIDy = SDL_AddTimer(50, AxisTimerCallbackY, nullptr);
+                        std::cout << "Moving down. Started timer ID: " << axisTimerIDy << std::endl;
+                    }
+                } else { // Axis in neutral position.
+                    currentInputY = 0;
+                    if (axisTimerIDy != 0) {
+                        SDL_RemoveTimer(axisTimerIDy);
+                        axisTimerIDy = 0;
+                    }
+                }
+            } 
+        
+            // Trigger input
+            else if (event.type == SDL_CONTROLLERAXISMOTION) {
+                if (event.cbutton.button == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
+                    int value = event.caxis.value;
+                    std::cout <<"Right trigger pressed. Current value before any check: (" << value << ")\n";
+                    if (value > 0){
+                    if (currentInputTrigger != 3){
+                        currentInputTrigger = 3;
+                        if (axisTimerTrigger != 0) SDL_RemoveTimer(axisTimerTrigger);
+                        axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
+                        std::cout <<"Right trigger pressed. Started timer ID: " << axisTimerTrigger << ")\n";
+                    }
+                } else {
+                        std::cout <<"Right trigger released. Started timer ID: " << axisTimerTrigger << ")\n";
+                        if (currentInputTrigger != -3){
+                        currentInputTrigger = -3;
+                        if (axisTimerTrigger != 0) {
+                            SDL_RemoveTimer(axisTimerTrigger);
+                            axisTimerTrigger = 0;
+                            arduinoCommunication(arduino_serial, currentInputTrigger);
+                        }
+                        // axisTimerTrigger = SDL_AddTimer(50, AxisTimerCallbackTrigger, nullptr);
+                    }
+                    //std::cout << "Shooting...\n" << std::endl;
+                }
         }
     }
 }
