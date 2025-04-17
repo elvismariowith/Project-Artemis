@@ -45,6 +45,7 @@ target_link_libraries(vision client)
 target_link_libraries(vision control)
 
 add_executable(main main.cpp)
+target_link_libraries(main control)
 target_link_libraries(main vision)
 
 

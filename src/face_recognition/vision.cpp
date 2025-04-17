@@ -114,15 +114,19 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
     return model;
 }
 void patrol(SerialPort &arduinoPort){
-    int random_direction = rand() %  2;
+    
+    int random_direction = (int)rand() %  2;
     int command = (random_direction == 0) ? 1 : -1;
-    arduinoPort.write(command);
+    for(int i = 0;i < 10;i++){
+        arduinoPort.write(command);
+    }
+    std::cout<<"Patrolling "<<command<<'\n';
 }
 std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
     std::pair<int,int> direction = {0,0};
     int OFFSET_HORIZONTAL = rectangleFace.width / 3;
     std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
-    std::cout<<"Center is at "<<pointy<<'\n';
+
     if(rectangleFace.x + OFFSET_HORIZONTAL > pointx){
         direction.first = 1;
     }
@@ -144,7 +148,7 @@ std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace)
     return direction;
 }
 int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier& eyesCascade,SerialPort& arduinoPort){
-    int framesItCanFail = 100;
+    int framesItCanFail = 10;
 
     Mat image = getImage(imageSize);
     Size detectionSize = Size(30,30);
@@ -156,7 +160,7 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     while(framesItCanFail  > 0){
         image = getImage(imageSize);
         faces = detectFaces(image,faceCascade,eyesCascade,detectionSize);
-
+        std::cout<<framesItCanFail<<'\n';
         if(faces.size() == 0){
             framesItCanFail--;
             continue;
@@ -179,7 +183,7 @@ void shoot(SerialPort& arduinoPort){
     arduinoPort.write(SHOOT_COMMAND);
     arduinoPort.write(STOP_SHOOT_COMMAND);
 }
-void automatedMode(bool isModelSaved)
+void automatedMode(bool isModelSaved,SerialPort& arduinoPort)
 {
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
     Size imageSize(350, 350);
@@ -189,7 +193,6 @@ void automatedMode(bool isModelSaved)
     CascadeClassifier eyeCascade;
     loadCascade(faceCascade,eyeCascade);
     Ptr<FisherFaceRecognizer> model = setupFisherFacesModel(imageSize,isModelSaved,faceCascade,eyeCascade);
-    SerialPort arduinoPort = findArduinoSerialPort();
 
     int framesDetected = 0;
     int currentLabel = 0;
@@ -215,8 +218,8 @@ void automatedMode(bool isModelSaved)
         std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
         if (faces.empty()){
 	     if(difftime(current_time,last_patrol_time) > 3) {
-		patrol(arduinoPort);
-		last_patrol_time = current_time;
+		    patrol(arduinoPort);
+		    last_patrol_time = current_time;
 	     }
 	     continue;
         }
@@ -227,7 +230,7 @@ void automatedMode(bool isModelSaved)
 
         Rect imageRect = Rect(0,0,image.cols,image.rows);
         Mat faceROI = image(faces[0] & imageRect); // take first detected face
-//        imshow("test",faceROI);
+       //imshow("test",faceROI);
         faceROI = preprocessImage(image,imageSize); // match training size
 
 
