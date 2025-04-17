@@ -18,21 +18,4 @@ int main(int argc, char** argv){
 
     //manual_thread.detach();
     automated_thread.join();
-
-    //calls pytho voice recognition
-    std::array<char, 128> buffer;
-    std::string result;
-
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen("python Voicerecognition.py", "r"), pclose);
-    if (!pipe) {
-        std::cerr << "Failed to run Python script\n";
-        return 1;
-    }
-    std::cout << "Python Output:\n";
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result = buffer.data();
-        //std::cout << buffer.data();
-    }
-    int input = stoi(result);
-    std::cout << input;
 }
