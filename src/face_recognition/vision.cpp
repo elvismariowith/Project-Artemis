@@ -129,17 +129,25 @@ int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
 }
 std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
     std::pair<int,int> direction = {0,0};
-    if(rectangleFace.x < pointx){
+    std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
+    std::cout<<"Center is at "<<pointy<<'\n';
+    if(rectangleFace.x > pointx){
         direction.first = 1;
     }
-    else if(rectangleFace.x + rectangleFace.width > pointx){
+    else if(rectangleFace.x + rectangleFace.width > pointx && pointx > rectangleFace.x){
+        direction.first = 0;
+    }
+    else{
         direction.first = -1;
     }
-    if(rectangleFace.y < pointy){
+    if(rectangleFace.y > pointy){
         direction.second = 2;
     }
-    else if(rectangleFace.y + rectangleFace.height > pointx){
-        direction.second = -2;
+    else if(rectangleFace.y + rectangleFace.height > pointy && pointy > rectangleFace.y){
+        direction.second = 0;
+    }
+    else{
+	direction.second = -2;
     }
     return direction;
 }
@@ -149,8 +157,9 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     Mat image = getImage(imageSize);
     Size detectionSize = Size(30,30);
     std::vector<Rect> faces;
+    const int OFFSET_VERTICAL = 100;
     int centerx = image.rows / 2;
-    int centery = image.cols / 2;
+    int centery = image.cols / 2 - OFFSET_VERTICAL;
     std::pair<int,int> direction;
     while(framesItCanFail  > 0){
         image = getImage(imageSize);
@@ -192,6 +201,7 @@ void automatedMode(bool isModelSaved)
     int currentLabel = 0;
 
     const int DETECTION_THRESHOLD = 20;
+    const int WAIT_TIME_S = 15;
     time_t last_time;
     time(&last_time);
     int curr_pos = 0;
@@ -214,7 +224,7 @@ void automatedMode(bool isModelSaved)
 
         Rect imageRect = Rect(0,0,image.cols,image.rows);
         Mat faceROI = image(faces[0] & imageRect); // take first detected face
-        imshow("test",faceROI);
+//        imshow("test",faceROI);
         faceROI = preprocessImage(image,imageSize); // match training size
 
 
@@ -229,15 +239,18 @@ void automatedMode(bool isModelSaved)
             std::cout<<"Person detected from the team\n";
             int couldCenter = centerFace(imageSize,faceCascade,eyeCascade,arduinoPort);
             if(couldCenter){
+		framesDetectedPerPerson.assign(NUM_PERSONS,0);
 //                shoot();
             }
         }
         else{
             time_t current_time;
             time(&current_time);
-            if(difftime(current_time,last_time) > 5){
+	    double diff = difftime(current_time,last_time);
+            std::cout<<diff<<'\n';
+            if(diff > WAIT_TIME_S){
                 framesDetectedPerPerson.assign(NUM_PERSONS,0);
-                last_time = 0;
+                last_time = current_time;
             }
         }
 
