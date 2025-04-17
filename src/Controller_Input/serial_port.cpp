@@ -1,4 +1,4 @@
-#include <string>
+#include <vector>
 #include <iostream>
 #include "serial_port.hpp"
 
@@ -7,6 +7,7 @@
 #include <termios.h>
 #include <sys/ioctl.h>
 #include <cstring>
+
 
 int openSerialPort(const std::string &serialPort) {
     int fd = open(serialPort.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
@@ -64,19 +65,11 @@ SerialPort::SerialPort(std::string name) {
     });
 }
 
-std::optional<SerialPortError> SerialPort::write(std::string message) const {
-    if (message.back() != '\n') {
-        message += '\n';
-    }
+std::optional<SerialPortError> SerialPort::write(int command) const {
+    
 
-    int fd = (intptr_t)this->serialPort.get();
-    ssize_t written = ::write(fd, message.c_str(), message.size());
-    if (written < 0) {
-        return SerialPortError::WriteError;
-    }
-
-    // Flush both input and output buffers
-    tcflush(fd, TCIOFLUSH);
+    std::ofstream arduinoSerial(this->getName());
+    arduinoSerial << command;
     return std::nullopt;
 }
 

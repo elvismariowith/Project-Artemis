@@ -23,12 +23,11 @@ const std::string CASCADES_PATH = "../src/face_recognition/Cascades/";
 using namespace cv;
 using namespace cv::face;
 
-struct tm y2k = {0};
 const int NUM_PERSONS = 6;
 const std::string MODEL_PATH = "model.xml";
 const int PATROL_COMMAND = 9;
 const int SHOOT_COMMAND = 3;
-
+const int STOP_SHOOT_COMMAND = -3;
 Mat preprocessImage(Mat image,Size imageSize){
     Mat gray_image, image_resized;
     cvtColor(image, gray_image, COLOR_BGR2GRAY);
@@ -114,27 +113,20 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
     std::cout<<"Model loaded successfully\n";
     return model;
 }
-int patrol(time_t& last_time, SerialPort &arduino,int curr_pos){
-    time_t current_time;
-
-    time(&current_time);  /* get current time; same as: timer = time(NULL)  */
-
-    int seconds = difftime(current_time,last_time);
-    if(seconds > 10){
-        last_time = current_time;
-        arduino.write(std::to_string(PATROL_COMMAND));
-        return curr_pos + 1;
-    };
-    return curr_pos;
+void patrol(SerialPort &arduinoPort){
+    int random_direction = rand() %  2;
+    int command = (random_direction == 0) ? 1 : -1;
+    arduinoPort.write(command);
 }
 std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
     std::pair<int,int> direction = {0,0};
+    int OFFSET_HORIZONTAL = rectangleFace.width / 3;
     std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
     std::cout<<"Center is at "<<pointy<<'\n';
-    if(rectangleFace.x > pointx){
+    if(rectangleFace.x + OFFSET_HORIZONTAL > pointx){
         direction.first = 1;
     }
-    else if(rectangleFace.x + rectangleFace.width > pointx && pointx > rectangleFace.x){
+    else if(rectangleFace.x + rectangleFace.width - OFFSET_HORIZONTAL > pointx && pointx > rectangleFace.x + OFFSET_HORIZONTAL){
         direction.first = 0;
     }
     else{
@@ -173,17 +165,19 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
         std::cout<<direction.first<<" "<<direction.second<<'\n';
         if(direction == std::make_pair(0,0)) return 1;
         if(direction.first != 0){
-            arduinoPort.write(std::to_string(direction.first));
+            arduinoPort.write(direction.first);
         }
         if(direction.second != 0){
-            arduinoPort.write(std::to_string(direction.second));
+            arduinoPort.write(direction.second);
         }
 
     }
     return 0;
 }
 void shoot(SerialPort& arduinoPort){
-    arduinoPort.write(std::to_string(SHOOT_COMMAND));
+    std::cout<<"Shooting Daniel "<<'\n';
+    arduinoPort.write(SHOOT_COMMAND);
+    arduinoPort.write(STOP_SHOOT_COMMAND);
 }
 void automatedMode(bool isModelSaved)
 {
@@ -200,23 +194,32 @@ void automatedMode(bool isModelSaved)
     int framesDetected = 0;
     int currentLabel = 0;
 
-    const int DETECTION_THRESHOLD = 20;
+    const int DETECTION_THRESHOLD = 5;
     const int WAIT_TIME_S = 15;
     time_t last_time;
+    time_t last_patrol_time;
     time(&last_time);
+    time(&last_patrol_time);
     int curr_pos = 0;
 
     std::vector<int> framesDetectedPerPerson(NUM_PERSONS);
     while (true)
     {
+        time_t current_time;
+        time(&current_time);
         if (waitKey(10) > 10)
             break;
         Mat image = getImage(imageSize);
         //capture.read(image);
         //detectAndDisplay(image,faceCascade,eyeCascade);
         std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
-        if (faces.empty()) continue; // No face detected, skip this frame
-
+        if (faces.empty()){
+	     if(difftime(current_time,last_patrol_time) > 3) {
+		patrol(arduinoPort);
+		last_patrol_time = current_time;
+	     }
+	     continue;
+        }
 
         //displayFaces(faces,image);
         cv::Size inflationSize(50,50);
@@ -233,19 +236,19 @@ void automatedMode(bool isModelSaved)
         double confidence = 0.0;
         model->predict(faceROI, predicted_label, confidence);
         std::cout << predicted_label << " " << confidence <<" "<<framesDetected<<std::endl;
-
+        
+        
         if(predicted_label != -1) framesDetectedPerPerson[predicted_label-1]++;
+        
         if(*max_element(framesDetectedPerPerson.begin(),framesDetectedPerPerson.end()) > DETECTION_THRESHOLD){
             std::cout<<"Person detected from the team\n";
             int couldCenter = centerFace(imageSize,faceCascade,eyeCascade,arduinoPort);
             if(couldCenter){
 		framesDetectedPerPerson.assign(NUM_PERSONS,0);
-//                shoot();
+                shoot(arduinoPort);
             }
         }
         else{
-            time_t current_time;
-            time(&current_time);
 	    double diff = difftime(current_time,last_time);
             std::cout<<diff<<'\n';
             if(diff > WAIT_TIME_S){
