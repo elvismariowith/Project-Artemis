@@ -6,6 +6,10 @@
 #include <memory>
 #include <unistd.h>
 #include <fstream>
+#include <chrono>
+#include <thread>
+#include <atomic>
+
 
 //#ifndef _WIN32
 //#include <unistd.h>
@@ -54,6 +58,6 @@ class SerialPort {
 };
 SerialPort loadServo();
 SerialPort findArduinoSerialPort();
-
+void writeCommandsThread(SerialPort& serialPort,int command,int repetitions,int milliseconds);
 #endif
 //>>>>>>> origin/Windows:src/Controller_Input/serial_port.hpp

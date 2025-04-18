@@ -22,6 +22,7 @@
 
 const std::string FACES_PATH = "../src/face_recognition/faces/";
 const std::string CASCADES_PATH = "../src/face_recognition/Cascades/";
+extern std::atomic_bool stop_patrolling;
 using namespace cv;
 using namespace cv::face;
 
@@ -115,22 +116,12 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
     std::cout<<"Model loaded successfully\n";
     return model;
 }
-void patrol(SerialPort &arduinoPort) {
-    
-    int random_direction = (int)rand() %  2;
-    int command = (random_direction == 0) ? 1 : -1;
 
-    for(int i = 0; i < 100; i++){
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        arduinoPort.write(command);
-    }
-
-    std::cout<<"Patrolling "<<command<<'\n';
-}
 std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace) {
     std::pair<int,int> direction = {0,0};
     int OFFSET_HORIZONTAL = rectangleFace.width / 3;
-    std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
+    int OFFSET_VERTICAL = rectangleFace.width / 3;
+    //std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
 
     if(rectangleFace.x + OFFSET_HORIZONTAL > pointx){
         direction.first = 1;
@@ -141,10 +132,10 @@ std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace)
     else{
         direction.first = -1;
     }
-    if(rectangleFace.y > pointy){
+    if(rectangleFace.y - OFFSET_VERTICAL> pointy){
         direction.second = 2;
     }
-    else if(rectangleFace.y + rectangleFace.height > pointy && pointy > rectangleFace.y){
+    else if(rectangleFace.y + rectangleFace.height  + OFFSET_VERTICAL> pointy && pointy > rectangleFace.y - OFFSET_VERTICAL){
         direction.second = 0;
     }
     else{
@@ -165,13 +156,13 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     while(framesItCanFail  > 0){
         image = getImage(imageSize);
         faces = detectFaces(image,faceCascade,eyesCascade,detectionSize);
-        std::cout<<framesItCanFail<<'\n';
+        //std::cout<<framesItCanFail<<'\n';
         if(faces.size() == 0){
             framesItCanFail--;
             continue;
         }
         direction = getDirectionToMove(centerx,centery,faces[0]);
-        std::cout<<direction.first<<" "<<direction.second<<'\n';
+        //std::cout<<direction.first<<" "<<direction.second<<'\n';
         if(direction == std::make_pair(0,0)) return 1;
         if(direction.first != 0){
             arduinoPort.write(direction.first);
@@ -184,7 +175,7 @@ int centerFace(Size& imageSize,CascadeClassifier& faceCascade,CascadeClassifier&
     return 0;
 }
 void shoot(SerialPort& arduinoPort){
-    std::cout<<"Shooting Daniel "<<'\n';
+    //std::cout<<"Shooting Daniel "<<'\n';
     arduinoPort.write(SHOOT_COMMAND);
     arduinoPort.write(STOP_SHOOT_COMMAND);
 }
@@ -202,7 +193,8 @@ void automatedMode(bool isModelSaved)
 
     int framesDetected = 0;
     int currentLabel = 0;
-
+    int patrol_left = 15;
+    int patrol_direction = -1;
     const int DETECTION_THRESHOLD = 5;
     const int WAIT_TIME_S = 15;
     time_t last_time;
@@ -211,15 +203,12 @@ void automatedMode(bool isModelSaved)
     time(&last_patrol_time);
     int curr_pos = 0;
 
+    std::thread patrolThread = std::thread(writeCommandsThread,std::ref(arduinoPort),patrol_direction,30,500);
+    patrolThread.detach();
     std::vector<int> framesDetectedPerPerson(NUM_PERSONS);
-
-    while (true) {
-        patrol(arduinoPort);
-    }
 
     while (true)
     {
-        
         time_t current_time;
         time(&current_time);
         if (waitKey(10) > 10)
@@ -229,10 +218,14 @@ void automatedMode(bool isModelSaved)
         //detectAndDisplay(image,faceCascade,eyeCascade);
         std::vector<Rect> faces = detectFaces(image, faceCascade, eyeCascade, Size(100, 100));
         if (faces.empty()){
-	     if(difftime(current_time,last_patrol_time) > 3) {
-		    patrol(arduinoPort);
-		    last_patrol_time = current_time;
-	     }
+	        if(difftime(current_time,last_patrol_time) > 15) {
+                stop_patrolling = false;
+                patrol_direction = (patrol_direction == -1) ?  1 : -1;
+                last_patrol_time = current_time;
+                patrolThread = std::thread(writeCommandsThread,std::ref(arduinoPort),patrol_direction,30,500);
+                patrolThread.detach();
+	        }
+
 	     continue;
         }
 
@@ -257,15 +250,17 @@ void automatedMode(bool isModelSaved)
         
         if(*max_element(framesDetectedPerPerson.begin(),framesDetectedPerPerson.end()) > DETECTION_THRESHOLD){
             std::cout<<"Person detected from the team\n";
+            stop_patrolling = true;
             int couldCenter = centerFace(imageSize,faceCascade,eyeCascade,arduinoPort);
             if(couldCenter){
-		framesDetectedPerPerson.assign(NUM_PERSONS,0);
+		    framesDetectedPerPerson.assign(NUM_PERSONS,0);
                 shoot(arduinoPort);
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             }
         }
         else{
 	    double diff = difftime(current_time,last_time);
-            std::cout<<diff<<'\n';
+            //std::cout<<diff<<'\n';
             if(diff > WAIT_TIME_S){
                 framesDetectedPerPerson.assign(NUM_PERSONS,0);
                 last_time = current_time;

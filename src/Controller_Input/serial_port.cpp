@@ -8,7 +8,7 @@
 #include <sys/ioctl.h>
 #include <cstring>
 
-
+std::atomic_bool stop_patrolling = false;
 int openSerialPort(const std::string &serialPort) {
     int fd = open(serialPort.c_str(), O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
@@ -69,7 +69,7 @@ std::optional<SerialPortError> SerialPort::write(int command)  {
     if (!arduino_serial.is_open()) {
         arduino_serial.open(this->name);
     }
-    std::cout<<"writing command " << command << std::endl;
+    //std::cout<<"writing command " << command << std::endl;
 
     arduino_serial << command << std::endl;
     return std::nullopt;
@@ -124,7 +124,6 @@ SerialPort findArduinoSerialPort() {
         std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
         return std::move(sp);        
     }
-
 }
 
 SerialPort::SerialPort(SerialPort&& other) noexcept {
@@ -138,4 +137,11 @@ SerialPort& SerialPort::operator=(SerialPort&& other) noexcept {
         this->serialPort = std::move(other.serialPort);
     }
     return *this;
+}
+void writeCommandsThread(SerialPort& serialPort,int command,int repetitions,int milliseconds){
+    for(int i = 0;i < repetitions;i++){
+        if(stop_patrolling) return;
+        serialPort.write(command);
+        std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
+    }
 }

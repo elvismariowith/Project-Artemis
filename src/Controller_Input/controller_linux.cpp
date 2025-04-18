@@ -142,9 +142,9 @@ int manualMode() {
             }
 
             //North button used to activate voice control
-            else if(event.cbutton.button == SDL_CONTROLLER_BUTTON_Y){
-                voiceControl(serialPort);
-            }
+             else if(event.cbutton.button == SDL_CONTROLLER_BUTTON_Y){
+                 voiceControl(serialPort);
+             }
             
             // Horizontal movement
             else if (event.type == SDL_CONTROLLERAXISMOTION && event.caxis.axis == SDL_CONTROLLER_AXIS_LEFTX) {
