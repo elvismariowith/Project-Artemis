@@ -31,8 +31,8 @@ target_link_libraries(client ${Boost_LIBRARIES})
 
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
-
-add_library(control  src/Controller_Input/serial_port.cpp src/Controller_Input/controller_linux.cpp src/Controller_Input/environment_manager.cpp)
+include_directories(src/voice_recognition)
+add_library(control  src/Controller_Input/serial_port.cpp src/Controller_Input/controller_linux.cpp src/Controller_Input/environment_manager.cpp src/voice_recognition/voice.cpp)
 include_directories(src/Controller_Input)
 target_link_libraries(control ${SDL2_LIBRARIES})
 

@@ -7,29 +7,15 @@
 #include <string>
 
 #include "voice.hpp"
-#include "serial_port.hpp"
+
 
 #ifdef _WIN32
     #define popen _popen
     #define pclose _pclose
 #endif
 
-SerialPort serialPort = [&]() -> SerialPort {
-    for (int i = 0; i < 10; ++i) {
-        std::string devPath = "/dev/ttyACM" + std::to_string(i);
-        try {
-            SerialPort sp(devPath);
-            std::cout << "Connected to Arduino on: " << sp.getName() << std::endl;
-            return sp;
-        } catch (...) {
-            // Fail silently, continue scanning
-        }
-    }
 
-    exit(-1);
-}()
-
-int voiceControl() {
+int voiceControl(SerialPort& arduinoPort) {
     std::array<char, 128> buffer;
     std::string result;
 
@@ -43,17 +29,15 @@ int voiceControl() {
         result = buffer.data();
         //std::cout << buffer.data();
     }
-    if(result.equals("") || result == "\n"){
+    if(result == "" || result == "\n"){
         return -1;
     }
     int input = std::stoi(result);
     std::cout << "Vocal Output: " <<input;
 
     
-
-    SerialPort arduinoPort = findArduinoSerialPort();
     arduinoPort.write(input);
-    if(input = 3)
+    if(input == 3)
         arduinoPort.write(-3);
 
     return 0;

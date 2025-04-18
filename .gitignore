@@ -1,4 +1,5 @@
 **/.vscode
 **/.env
+/venv
 /build
 /vcpkg_installed
