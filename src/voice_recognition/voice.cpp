@@ -43,8 +43,11 @@ int voiceControl() {
         result = buffer.data();
         //std::cout << buffer.data();
     }
-    int input = stoi(result);
-    std::cout << input;
+    if(result.equals("") || result == "\n"){
+        return -1;
+    }
+    int input = std::stoi(result);
+    std::cout << "Vocal Output: " <<input;
 
     
 

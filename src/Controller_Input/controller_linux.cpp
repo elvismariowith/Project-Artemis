@@ -15,6 +15,7 @@
 
 #include "environment_manager.h"
 #include "controller_linux.hpp"
+#include "voice.hpp"
 
 // debugging
 //#define SERIAL_PORT "/dev/ttyACM0"
@@ -86,9 +87,7 @@ SDL_GameController* detectController() {
 
     return controller;
 }
-SerialPort loadPort(){
-    
-}
+
 int manualMode() {
     if (SDL_Init(SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_TIMER) < 0) {
         std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -140,6 +139,11 @@ int manualMode() {
                 int command = event.user.code;
                 arduinoCommunication(arduino_serial, command);
 
+            }
+
+            //North button used to activate voice control
+            else if(event.cbutton.button == SDL_CONTROLLER_BUTTON_Y){
+                voiceControl();
             }
             
             // Horizontal movement
@@ -206,6 +210,7 @@ int manualMode() {
         
             // Trigger input
             else if (event.type == SDL_CONTROLLERAXISMOTION) {
+
                 if (event.cbutton.button == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
                     int value = event.caxis.value;
                     std::cout <<"Right trigger pressed. Current value before any check: (" << value << ")\n";
