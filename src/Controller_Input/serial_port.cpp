@@ -66,7 +66,11 @@ SerialPort::SerialPort(std::string name): arduino_serial(name) {
 }
 
 std::optional<SerialPortError> SerialPort::write(int command)  {
-    
+    if (!arduino_serial.is_open()) {
+        arduino_serial.open(this->name);
+    }
+    std::cout<<"writing command " << command << std::endl;
+
     arduino_serial << command << std::endl;
     return std::nullopt;
 }

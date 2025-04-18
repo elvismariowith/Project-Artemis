@@ -3,6 +3,8 @@
 #include <vector>
 #include <time.h>
 #include <algorithm>
+#include <chrono>
+#include <thread>
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
@@ -113,16 +115,19 @@ Ptr<FisherFaceRecognizer> setupFisherFacesModel(Size &image_size,bool isModelSav
     std::cout<<"Model loaded successfully\n";
     return model;
 }
-void patrol(SerialPort &arduinoPort){
+void patrol(SerialPort &arduinoPort) {
     
     int random_direction = (int)rand() %  2;
     int command = (random_direction == 0) ? 1 : -1;
-    for(int i = 0;i < 10;i++){
+
+    for(int i = 0; i < 100; i++){
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         arduinoPort.write(command);
     }
+
     std::cout<<"Patrolling "<<command<<'\n';
 }
-std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace){\
+std::pair<int,int> getDirectionToMove(int pointx,int pointy,Rect& rectangleFace) {
     std::pair<int,int> direction = {0,0};
     int OFFSET_HORIZONTAL = rectangleFace.width / 3;
     std::cout<<"You are at "<<rectangleFace.y<<" with width "<<rectangleFace.height<<'\n';
@@ -207,8 +212,14 @@ void automatedMode(bool isModelSaved)
     int curr_pos = 0;
 
     std::vector<int> framesDetectedPerPerson(NUM_PERSONS);
+
+    while (true) {
+        patrol(arduinoPort);
+    }
+
     while (true)
     {
+        
         time_t current_time;
         time(&current_time);
         if (waitKey(10) > 10)

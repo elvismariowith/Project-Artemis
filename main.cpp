@@ -12,10 +12,10 @@ int main(int argc, char** argv){
     }
 
     bool modelSaved = (std::string(argv[1]) == "1");
-    SerialPort arduinoPort = findArduinoSerialPort();
+    // std::thread automated_thread(automatedMode, modelSaved);
     std::thread manual_thread(manualMode);
-    std::thread automated_thread(automatedMode, modelSaved);
 
-    //manual_thread.detach();
-    automated_thread.join();
+
+    manual_thread.join();
+    //automated_thread.join();
 }
