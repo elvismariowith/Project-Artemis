@@ -27,7 +27,7 @@ SerialPort serialPort = [&]() -> SerialPort {
     }
 
     exit(-1);
-}()
+}();
 
 int voiceControl() {
     std::array<char, 128> buffer;
@@ -40,10 +40,10 @@ int voiceControl() {
     }
     std::cout << "Python Output:\n";
     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result = buffer.data();
+        result += buffer.data();
         //std::cout << buffer.data();
     }
-    if(result.equals("") || result == "\n"){
+    if(result.empty() || result == "\n"){
         return -1;
     }
     int input = std::stoi(result);
@@ -53,7 +53,7 @@ int voiceControl() {
 
     SerialPort arduinoPort = findArduinoSerialPort();
     arduinoPort.write(input);
-    if(input = 3)
+    if(input == 3)
         arduinoPort.write(-3);
 
     return 0;
